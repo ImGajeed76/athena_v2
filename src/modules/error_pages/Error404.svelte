@@ -90,15 +90,20 @@
 
         imageElement.addEventListener("click", () => {
             if (inBookBounds) {
-                imageElement.removeEventListener("mousemove", () => {});
-                imageElement.removeEventListener("click", () => {});
-                window.removeEventListener("resize", () => {});
-                goto("/ee/1");
+                imageElement.removeEventListener("mousemove", () => {
+                });
+                imageElement.removeEventListener("click", () => {
+                });
+                window.removeEventListener("resize", () => {
+                });
+                goto("/ee/L7zb6X");
             }
         });
     });
 </script>
 
+
+<img src="athena_404_page_book_out.png" alt="Cached Background" class="sr-only">
 
 <div class="w-screen h-screen fixed top-0 left-0">
     <img bind:this={imageElement} src="athena_404_page.png" alt="Background"

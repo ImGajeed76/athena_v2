@@ -14,6 +14,12 @@
             <button class="btn variant-filled-warning">Warning</button>
             <button class="btn variant-filled-error">Error</button>
         </div>
+        <div class="w-full h-56 p-5 rounded-md shadow-stance-invert">
+            <p>I Love this shadow</p>
+        </div>
+        <div class="w-full h-56 p-5 rounded-md shadow-stance">
+            <p>I Love this shadow too</p>
+        </div>
     </div>
 </div>
 
