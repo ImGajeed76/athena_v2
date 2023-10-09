@@ -1,5 +1,5 @@
 import {createClient} from "@supabase/supabase-js";
-import {PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL} from "$env/static/public";
+import {PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_IN_PROD} from "$env/static/public";
 import {get, writable} from "svelte/store";
 
 export const loggedIn = writable(false);
@@ -14,8 +14,9 @@ export const currentUser = writable<null | {
 export const setupComplete = writable(true);
 
 export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-//supabase.auth.refreshSession().then(onMount);
-onMount();
+
+if (PUBLIC_IN_PROD === "true") supabase.auth.refreshSession().then(onMount);
+else onMount();
 
 function onMount() {
     console.log("Supabase mounted");
