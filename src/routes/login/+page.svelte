@@ -1,7 +1,6 @@
 <script>
     import {loginWithEmail, loginWithGitHub} from "$lib/database";
     import {writable} from "svelte/store";
-    import {goto} from "$app/navigation";
     import {ProgressBar} from "@skeletonlabs/skeleton";
 
     const password = writable("");
@@ -58,8 +57,8 @@
 </script>
 
 <div class="w-full h-full grid lg:grid-cols-2">
-    <div class="w-full p-5 grid items-center py-32">
-        <div class="lg:max-w-lg max-w-md w-full h-full shadow-stance rounded-md p-5 m-auto">
+    <div class="w-full p-5 grid items-center">
+        <div class="lg:max-w-lg max-w-md w-full h-fit shadow-stance rounded-md p-5 m-auto">
             <h2 class="h3 font-bold mb-1">Welcome back</h2>
             <p>Login to your account.</p>
 
