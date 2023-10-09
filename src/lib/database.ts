@@ -14,7 +14,8 @@ export const currentUser = writable<null | {
 export const setupComplete = writable(true);
 
 export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-supabase.auth.refreshSession().then(onMount);
+//supabase.auth.refreshSession().then(onMount);
+onMount();
 
 function onMount() {
     console.log("Supabase mounted");
