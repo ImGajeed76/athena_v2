@@ -36,7 +36,7 @@
 
     setupComplete.subscribe((value) => {
         if (!value && $page.url.pathname !== '/complete_setup') {
-            goto('/complete_setup')
+            goto('/account#public-profile')
         }
     })
 
@@ -112,7 +112,7 @@
 <div class="h-screen w-screen">
     <AppShell>
         <svelte:fragment slot="header">
-            <div id="bar" class="sticky grid w-full items-center h-16 shadow-2xl mb-10 px-5">
+            <div id="bar" class="sticky grid w-full items-center h-16 px-5 overflow-hidden shadow-xl">
                 <div class="w-full max-w-6xl mx-auto flex justify-between items-center">
                     {#if $page.status === 404}
                         <a href="/" class="h3 p-2 text-white">Home</a>
@@ -145,6 +145,8 @@
                 </div>
             </div>
         </svelte:fragment>
-        <slot/>
+        <div class="w-full h-full pt-5">
+            <slot/>
+        </div>
     </AppShell>
 </div>

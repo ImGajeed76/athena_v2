@@ -63,7 +63,10 @@ export async function logout() {
 }
 
 async function updateCurrentUser() {
-    if (!loggedIn) currentUser.set(null);
+    if (!loggedIn) {
+        currentUser.set(null);
+        return;
+    }
 
     const {data, error} = await supabase.auth.getUser();
     if (error || !data.user) {
@@ -78,7 +81,6 @@ async function updateCurrentUser() {
     username = username || data.user.email!.split("@")[0] || null;
     const short_username = username ? username.match(/[A-Z]/g)?.slice(0, 2).join("") || username.slice(0, 2).toUpperCase() : null;
 
-
     currentUser.set({
         email: data.user.email,
         uid: data.user.id,
@@ -87,6 +89,27 @@ async function updateCurrentUser() {
         short_username: short_username,
         avatar_url: data.user.user_metadata!.avatar_url || null,
     });
+}
 
+export async function updateMetadata() {
+    const user = get(currentUser);
+    if (!user) return;
+
+    await supabase.auth.updateUser({
+        data: {
+            user_name: user.username,
+            avatar_url: user.avatar_url,
+        }
+    });
+
+    await updateCurrentUser();
+}
+
+export async function updateEmail(email: string) {
+    await supabase.auth.updateUser({
+        email: email,
+    });
+
+    await updateCurrentUser();
 }
 

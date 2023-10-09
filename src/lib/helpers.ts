@@ -6,3 +6,7 @@ export function generateRandomPassword(length = 16) {
     }
     return password;
 }
+
+export function validatePassword(password: string) {
+    return password.length >= 8;
+}
