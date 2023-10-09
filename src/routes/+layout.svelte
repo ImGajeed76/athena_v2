@@ -7,7 +7,7 @@
         AppShell,
         Avatar,
         Drawer,
-        getDrawerStore,
+        getDrawerStore, getModalStore,
         initializeStores,
         Modal,
         storePopup,
@@ -17,13 +17,12 @@
     import {goto} from "$app/navigation";
     import {onMount} from "svelte";
     import {page} from "$app/stores";
+    import {currentUser, loggedIn, logout, setupComplete} from "$lib/database";
 
     storePopup.set({computePosition, autoUpdate, flip, shift, offset, arrow});
     initializeStores();
 
     const drawerStore = getDrawerStore();
-
-    const loggedIn = writable(true);
 
     function openAccountDrawer() {
         drawerStore.open({
@@ -34,6 +33,12 @@
             position: 'right',
         })
     }
+
+    setupComplete.subscribe((value) => {
+        if (!value && $page.url.pathname !== '/complete_setup') {
+            goto('/complete_setup')
+        }
+    })
 
     onMount(() => {
         page.subscribe((value) => {
@@ -53,8 +58,9 @@
             <div class="p-5 h-full grid grid-rows-[auto_1fr]">
                 <div class="flex justify-between">
                     <div class="flex items-center h-10">
-                        <Avatar width="w-10 mr-3"></Avatar>
-                        <h3 class="h5">(Username)</h3>
+                        <Avatar width="w-10 mr-3" initials="{$currentUser?.short_username || 'AB'}"
+                                src="{$currentUser?.avatar_url || ''}"></Avatar>
+                        <h3 class="h5">{$currentUser?.username}</h3>
                     </div>
                     <button class="btn btn-sm w-fit h-full outline-0 border-0" on:click={drawerStore.close}>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -63,9 +69,9 @@
                     </button>
                 </div>
 
-                <div class="pt-7 px-3 h-full">
+                <div class="pt-7 px-3 h-full relative">
                     <ul class="list">
-                        <li class="py-1 pl-3 hover:shadow-stance duration-200">
+                        <li class="btn py-2 pl-3 hover:shadow-stance duration-200 justify-start">
                                     <span>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                                              height="16">
@@ -82,6 +88,15 @@
 
                     </ul>
                     <hr class="h-[2px] bg-surface-500-400-token my-2">
+
+                    <button class="absolute bottom-0 w-full mb-5 text-error-500 hover:shadow-stance btn hover:bg-error-200 flex items-center"
+                        on:click={logout}
+                    >
+                        <span class="mr-0">Logout</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+                            <path fill="#f22c5d" d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm10.44 4.5-1.97-1.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.97-1.97H6.75a.75.75 0 0 1 0-1.5Z"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
         {:else}
@@ -97,7 +112,7 @@
 <div class="h-screen w-screen">
     <AppShell>
         <svelte:fragment slot="header">
-            <div id="bar" class="sticky grid w-full items-center h-16 shadow-stance mb-10 px-5">
+            <div id="bar" class="sticky grid w-full items-center h-16 shadow-2xl mb-10 px-5">
                 <div class="w-full max-w-6xl mx-auto flex justify-between items-center">
                     {#if $page.status === 404}
                         <a href="/" class="h3 p-2 text-white">Home</a>
@@ -112,7 +127,8 @@
                                 class="h-10 w-10 text-white rounded-full btn variant-ghost grid justify-center items-center"
                                 on:click={openAccountDrawer}
                         >
-                            <Avatar width="w-10"></Avatar>
+                            <Avatar width="w-10" initials="{$currentUser?.short_username || 'AB'}"
+                                    src="{$currentUser?.avatar_url || ''}"></Avatar>
                         </button>
                     {:else}
                         <button

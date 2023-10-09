@@ -12,8 +12,8 @@ export default {
     theme: {
         extend: {
             boxShadow: {
-                'stance': 'inset -1px -3px 5px rgba(0, 0, 0, 0.2), 2px 6px 9px rgba(0, 0, 0, 0.2)',
-                'stance-invert': '-1px -3px 5px rgba(0, 0, 0, 0.2), inset 2px 6px 9px rgba(0, 0, 0, 0.2)',
+                'stance': 'inset -0.5px -1.5px 2.5px rgba(0, 0, 0, 0.2), 2px 6px 6px rgba(0, 0, 0, 0.2)',
+                'stance-invert': '-0.5px -1.5px 2.5px rgba(0, 0, 0, 0.2), inset 2px 6px 6px rgba(0, 0, 0, 0.2)',
             }
         },
     },
