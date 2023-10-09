@@ -42,6 +42,9 @@ export function signUpWithEmail(email: string, password: string) {
 export function loginWithGitHub() {
     return supabase.auth.signInWithOAuth({
         provider: "github",
+        options: {
+            redirectTo: window.location.origin + "/",
+        }
     });
 }
 
