@@ -187,7 +187,7 @@
         const file = files[0];
         if (!accepted.includes(file.type)) return;
         const filesize = ((file.size/1024)/1024); // MB
-        if (filesize > 2) return;
+        if (filesize > 1) return;
 
         image_type = file.type;
 
