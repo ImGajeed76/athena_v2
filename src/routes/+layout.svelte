@@ -17,7 +17,7 @@
     import {goto} from "$app/navigation";
     import {onMount} from "svelte";
     import {page} from "$app/stores";
-    import {currentUser, loggedIn, logout, setupComplete} from "$lib/database";
+    import {currentUser, get2FAid, loggedIn, logout, setupComplete} from "$lib/database";
 
     storePopup.set({computePosition, autoUpdate, flip, shift, offset, arrow});
     initializeStores();
@@ -48,6 +48,17 @@
             } else {
                 bar.style.background = "";
             }
+
+            setTimeout(() => {
+                if ($currentUser && $currentUser.aal.currentLevel === "aal1") {
+                    get2FAid().then(({data, error}) => {
+                        if (error || !data) return;
+                        if (data.id) {
+                            logout();
+                        }
+                    })
+                }
+            }, 1000)
         })
     })
 </script>

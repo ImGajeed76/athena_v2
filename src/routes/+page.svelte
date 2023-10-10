@@ -1,5 +1,9 @@
 <script>
-import {currentUser} from "$lib/database";
+    import {currentUser} from "$lib/database";
+    import PasswordCheck from "../modules/auth/PasswordCheck.svelte";
+    import {writable} from "svelte/store";
+    import {onMount} from "svelte";
+    import VerifyWith2FA from "../modules/modals/VerifyWith2FA.svelte";
 </script>
 
 <div class="container h-[200vh] mx-auto flex justify-center">
@@ -20,6 +24,7 @@ import {currentUser} from "$lib/database";
         <div class="w-full h-56 p-5 rounded-md shadow-stance">
             <p>I Love this shadow too</p>
         </div>
+        <img src={$currentUser?.avatar_url}>
     </div>
 </div>
 

@@ -1,7 +1,8 @@
 <script>
-    import {loginWithEmail, loginWithGitHub} from "$lib/database";
+    import {loginWithEmail, loginWithGitHub, logout} from "$lib/database";
     import {writable} from "svelte/store";
     import {ProgressBar} from "@skeletonlabs/skeleton";
+    import VerifyWith2FA from "../../modules/modals/VerifyWith2FA.svelte";
 
     const password = writable("");
     const email = writable("");
@@ -34,17 +35,42 @@
             return;
         }
 
-        const {error} = await loginWithEmail($email, $password);
-        loading.set(false);
+        const {data, error} = await loginWithEmail($email, $password);
 
-        if (error) {
+        if (error || !data) {
+            console.log(error)
             message.set({
-                text: error.message,
+                text: error?.message || "An error occurred",
                 style: "text-error-500"
             })
+            loading.set(false);
             return;
         }
 
+        if (data.user.user_metadata.mfa_id) {
+            verifyWith2FA.set(true);
+            await new Promise(resolve => {
+                verified.subscribe(value => {
+                    if (value) resolve("");
+                })
+                cancel.subscribe(value => {
+                    if (value) resolve("");
+                })
+            })
+        }
+
+        if (!$verified) {
+            loading.set(false);
+            message.set({
+                text: "",
+                style: ""
+            })
+            verifyWith2FA.set(false);
+            await logout();
+            return;
+        }
+
+        loading.set(false);
         message.set({
             text: "Logged in successfully! Redirecting...",
             style: "text-success-500"
@@ -54,9 +80,18 @@
             window.location.href = "/";
         }, 2000);
     }
+
+    const verifyWith2FA = writable(false);
+    const verified = writable(false);
+    const cancel = writable(false);
+
+    const message2 = writable({
+        text: '',
+        style: '',
+    });
 </script>
 
-<div class="w-full h-full grid lg:grid-cols-2">
+<div class="w-full h-full grid lg:grid-cols-2 grid-cols-1">
     <div class="w-full p-5 grid items-center">
         <div class="lg:max-w-lg max-w-md w-full h-fit shadow-stance rounded-md p-5 m-auto">
             <h2 class="h3 font-bold mb-1">Welcome back</h2>
@@ -79,18 +114,20 @@
             <form class="my-10 mt-0" on:submit={login}>
                 <label class="label mb-5">
                     <span class="ml-1">Email</span>
-                    <input class="input" type="email" placeholder="Email" bind:value={$email}/>
+                    <input class="input" type="email" placeholder="Email" bind:value={$email} disabled={$loading}/>
                 </label>
 
                 <label class="label mb-8">
                     <span class="ml-1 flex justify-between">
                         Password
-                        <a href="/forgot-password" class="underline text-secondary-600 hover:text-primary-500">Forgot Password?</a>
+                        <a href="/auth/forgot-password" class="underline text-secondary-600 hover:text-primary-500">Forgot Password?</a>
                     </span>
-                    <input class="input" type="password" placeholder="Password" bind:value={$password}/>
+                    <input autocomplete="current-password" class="input" type="password" placeholder="Password" bind:value={$password}
+                           disabled={$loading}/>
                 </label>
 
-                <button class="btn variant-ghost-primary hover:variant-filled-primary w-full" type="submit">
+                <button class="btn variant-ghost-primary hover:variant-filled-primary w-full" type="submit"
+                        disabled={$loading}>
                     Login
                 </button>
 
@@ -108,5 +145,20 @@
             </p>
         </div>
     </div>
-    <div></div>
+    <div class="w-full p-5 grid items-center">
+        {#if $verifyWith2FA}
+            <div class="lg:w-fit w-full max-w-md h-fit p-5 shadow-stance m-auto rounded-md">
+                <h2 class="h3 font-bold mb-1">Verification</h2>
+                <p>Please enter the code from your authenticator app.</p>
+                <div class="w-full grid justify-center my-5 mb-0">
+                    <VerifyWith2FA verified={verified} message={message2}></VerifyWith2FA>
+                    <button class="btn variant-ghost mx-2 mt-2 hover:variant-ghost-error"
+                            on:click={() => {$cancel = true}}>
+                        Cancel
+                    </button>
+                    <p class="{$message2.style} text-center mt-2">{$message2.text}</p>
+                </div>
+            </div>
+        {/if}
+    </div>
 </div>

@@ -44,6 +44,7 @@
   "type": "module",
   "dependencies": {
     "@floating-ui/dom": "1.5.3",
-    "@supabase/supabase-js": "^2.38.0"
+    "@supabase/supabase-js": "^2.38.0",
+    "base64-arraybuffer": "^1.0.2"
   }
 }
