@@ -1,8 +1,9 @@
-<script>
+<script lang="ts">
     import {loginWithEmail, loginWithGitHub, logout} from "$lib/database";
     import {writable} from "svelte/store";
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import VerifyWith2FA from "../../modules/modals/VerifyWith2FA.svelte";
+    import {goto} from "$app/navigation";
 
     const password = writable("");
     const email = writable("");

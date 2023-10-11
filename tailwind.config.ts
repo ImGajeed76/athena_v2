@@ -12,9 +12,10 @@ export default {
     theme: {
         extend: {
             boxShadow: {
-                'stance': 'inset -0.5px -1.5px 2.5px rgba(0, 0, 0, 0.2), 2px 6px 6px rgba(0, 0, 0, 0.2)',
+                'stance': '0 4px 2px 0 rgba(0, 0, 0, 0.1), inset -1px -2px 2px rgba(0, 0, 0, 0.2), 0 10px 6px 2px rgba(0, 0, 0, 0.1)',
+                'stance-down': '0 1px 2px 0 rgba(0, 0, 0, 0.15), inset -1px -2px 2px rgba(0, 0, 0, 0.2), 0 5px 6px 0 rgba(0, 0, 0, 0.1)',
                 'stance-invert': '-0.5px -1.5px 2.5px rgba(0, 0, 0, 0.2), inset 2px 6px 6px rgba(0, 0, 0, 0.2)',
-            }
+            },
         },
     },
     plugins: [

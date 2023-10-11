@@ -6,18 +6,26 @@ import {decode} from 'base64-arraybuffer';
 
 export const loggedIn = writable(false);
 export const currentUser = writable<null | {
-    email: string | undefined;
-    uid: string;
-    created_at: Date;
-    username: string | null;
-    short_username: string | null;
-    avatar_url: string | null;
+    email: string | undefined,
+    uid: string,
+    created_at: Date,
+    username: string | null,
+    short_username: string | null,
+    avatar_url: string | null,
     aal: {
         currentLevel: AuthenticatorAssuranceLevels | null,
         nextLevel: AuthenticatorAssuranceLevels | null,
         currentAuthenticationMethods: AMREntry[]
     }
 }>(null);
+
+let currentUserData: null | {
+    uid: string,
+    email: string,
+    created_at: Date,
+    meta_data: any
+} = null
+
 export const setupComplete = writable(true);
 
 export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
@@ -32,6 +40,8 @@ function onMount() {
         updateCurrentUser();
     });
 }
+
+// -------- AUTH -------
 
 export function signUpWithEmail(email: string, password: string) {
     return supabase.auth.signUp({
@@ -67,72 +77,6 @@ export async function logout() {
     await supabase.auth.signOut();
     loggedIn.set(false);
     window.location.reload();
-}
-
-async function updateCurrentUser() {
-    if (!loggedIn) {
-        currentUser.set(null);
-        return;
-    }
-
-    const {data: userData, error: userError} = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-        console.error(userError);
-        return;
-    }
-
-    const {data: aalData, error: aalError} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (aalError || !aalData) {
-        console.error(aalError);
-        return;
-    }
-
-    let username = userData.user.user_metadata!.user_name || null;
-    if (username === null) {
-        setupComplete.set(false);
-    }
-    username = username || userData.user.email!.split("@")[0] || null;
-    const short_username = username ? username.match(/[A-Z]/g)?.slice(0, 2).join("") || username.slice(0, 2).toUpperCase() : null;
-
-    currentUser.set({
-        email: userData.user.email,
-        uid: userData.user.id,
-        created_at: new Date(userData.user.created_at),
-        username: username,
-        short_username: short_username,
-        avatar_url: null,
-        aal: aalData,
-    });
-
-    const avatar = await getAvatar(userData.user.user_metadata!.avatar_url);
-
-    currentUser.update(user => {
-        if (!user) return user;
-        user.avatar_url = avatar;
-        return user;
-    })
-}
-
-export async function updateMetadata() {
-    const user = get(currentUser);
-    if (!user) return;
-
-    await supabase.auth.updateUser({
-        data: {
-            user_name: user.username,
-            avatar_url: user.avatar_url,
-        }
-    });
-
-    await updateCurrentUser();
-}
-
-export async function updateEmail(email: string) {
-    await supabase.auth.updateUser({
-        email: email,
-    });
-
-    await updateCurrentUser();
 }
 
 export function sendPasswordResetEmail(email: string) {
@@ -244,39 +188,113 @@ export async function unenroll(): Promise<{
     return unenroleResponse;
 }
 
+// ------- User Data -------
 
-export async function uploadAvatar(base64: string, contentType: string): Promise<{ data: any, error: null } | { data: null, error: any } | UserResponse> {
-    const user = get(currentUser);
-    if (!user) {
-        return {
-            data: null,
-            error: null
-        };
+
+// Update Local Data
+async function updateCurrentUser() {
+    if (!get(loggedIn)) {
+        currentUser.set(null);
+        return;
     }
 
-    const folder = `${user.uid}/avatar.${contentType.split("/")[1]}`;
-
-    const uploadResponse = await supabase
-        .storage
-        .from('avatars')
-        .upload(folder, decode(base64), {
-            contentType,
-            upsert: true
-        })
-
-    if (uploadResponse.error) {
-        return uploadResponse
+    const {data: userData, error: userError} = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+        console.error(userError);
+        return;
     }
 
-    return await supabase.auth.updateUser({
-        data: {
-            avatar_url: 'db:' + uploadResponse.data.path
-        }
+    currentUserData = {
+        email: userData.user.email || "",
+        uid: userData.user.id,
+        created_at: new Date(userData.user.created_at),
+        meta_data: userData.user.user_metadata
+    }
+
+    await maybeCreateUserRow();
+
+    const {data: aalData, error: aalError} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalError || !aalData) {
+        console.error(aalError);
+        return;
+    }
+
+    let username = await getUsername();
+    if (username === "") setupComplete.set(false);
+
+    username = username || currentUserData.email.split("@")[0];
+    const short_username = username.match(/[A-Z]/g)?.slice(0, 2).join("") || username.slice(0, 2).toUpperCase();
+
+    currentUser.set({
+        email: userData.user.email,
+        uid: userData.user.id,
+        created_at: new Date(userData.user.created_at),
+        username: username,
+        short_username: short_username,
+        avatar_url: null,
+        aal: aalData,
+    });
+
+    const avatar = await getAvatar();
+
+    currentUser.update(user => {
+        if (!user) return user;
+        user.avatar_url = avatar;
+        return user;
     })
 }
 
+export async function getUsername() {
+    if (!currentUserData) return "";
+
+    const {data, error} = await supabase
+        .from("users")
+        .select("username")
+        .eq("email", currentUserData.email)
+        .single();
+
+    if (error) {
+        console.error(error)
+        return "";
+    }
+
+    if (data.username === "" && currentUserData.meta_data.username) {
+        return currentUserData.meta_data.username;
+    }
+
+    return data.username as string
+}
+
 let imageCash: Record<string, string> = {};
-async function getAvatar(url: string) {
+export async function getAvatar(avatar_url?: string): Promise<string | null> {
+    if (!currentUserData) return null;
+
+    let url = "";
+
+    if (!avatar_url) {
+        const {data: fetchData, error: fetchError} = await supabase
+            .from("users")
+            .select("avatar")
+            .eq("email", currentUserData.email)
+            .single();
+
+        if (fetchError) {
+            console.error(fetchError);
+            return null;
+        }
+
+        url = fetchData.avatar as string;
+    } else {
+        url = avatar_url;
+    }
+
+
+    if (!url && currentUserData.meta_data.avatar_url) {
+        url = currentUserData.meta_data.avatar_url;
+    } else if (!url) {
+        return null;
+    }
+
     if (!url.startsWith("db:")) return url;
 
     if (imageCash[url]) {
@@ -293,11 +311,9 @@ async function getAvatar(url: string) {
         .download(fileUrl);
 
     if (error || !data) {
-        console.log(error)
+        console.error(error)
         return null;
     }
-
-    console.log(data)
 
     const reader = new FileReader();
     let dataUrl = "";
@@ -314,4 +330,84 @@ async function getAvatar(url: string) {
     imageCash[url] = dataUrl;
 
     return dataUrl;
+}
+
+// Update DB Data
+
+export async function maybeCreateUserRow() {
+    if (!currentUserData) return;
+
+    const {error: fetchError} = await supabase
+        .from("users")
+        .select("email")
+        .eq("email", currentUserData.email)
+        .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+        console.error(fetchError);
+        return;
+    } else if (fetchError) {
+        const {error: insertError} = await supabase
+            .from("users")
+            .insert({
+                email: currentUserData.email,
+            })
+
+        if (insertError) {
+            console.error(insertError)
+        }
+    }
+}
+
+export async function updateUsername(username: string) {
+    if (!currentUserData) return;
+
+    const {error} = await supabase
+        .from("users")
+        .update({username})
+        .eq("email", currentUserData.email);
+
+    if (error) {
+        console.error(error);
+    }
+
+    await updateCurrentUser();
+}
+
+export async function updateEmail(email: string) {
+    await supabase.auth.updateUser({
+        email: email,
+    });
+
+    await updateCurrentUser();
+}
+
+export async function uploadAvatar(base64: string, contentType: string): Promise<{ data: any, error: null } | { data: null, error: any } | UserResponse> {
+    if (!currentUserData) {
+        return {
+            data: null,
+            error: null
+        };
+    }
+
+    const folder = `${currentUserData.uid}/avatar`;
+
+    const uploadResponse = await supabase
+        .storage
+        .from('avatars')
+        .upload(folder, decode(base64), {
+            contentType,
+            upsert: true
+        })
+
+    if (uploadResponse.error) {
+        return uploadResponse
+    }
+
+    const imagePath = 'db:' + uploadResponse.data.path;
+
+    return supabase
+        .from("users")
+        .update({avatar: imagePath})
+        .eq("email", currentUserData.email);
 }

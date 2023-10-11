@@ -1,9 +1,12 @@
 <script lang="ts">
-    import {FileDropzone, ProgressBar} from "@skeletonlabs/skeleton";
+    import {FileDropzone, getToastStore, ProgressBar, Toast} from "@skeletonlabs/skeleton";
     import {writable} from "svelte/store";
     import {copy} from "$lib/helpers";
     import {uploadAvatar} from "$lib/database";
     import {goto} from "$app/navigation";
+    import {onMount} from "svelte";
+
+    const toastStore = getToastStore();
 
     let files: FileList;
     const accepted = ["image/jpeg", "image/jpg", "image/png"]
@@ -76,28 +79,51 @@
 
         let target: null | EventTarget = null;
 
-        $cropArea.addEventListener("mousedown", (e: MouseEvent) => {
-            drag_start_pos = {
-                x: e.x,
-                y: e.y
+        function onDown(e: MouseEvent | TouchEvent) {
+            if (e instanceof TouchEvent) {
+                drag_start_pos = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY
+                }
             }
+
+            if (e instanceof MouseEvent) {
+                drag_start_pos = {
+                    x: e.x,
+                    y: e.y
+                }
+            }
+
             target = e.target;
             mouseDown = true;
-        })
+        }
 
-        document.addEventListener("mouseup", () => {
+        function onUp() {
             mouseDown = false;
             target = null;
             old_position = copy(position);
             old_distance = copy(distance);
-        })
+        }
 
-        $cropArea.addEventListener("mousemove", (e: MouseEvent) => {
+        $cropArea.addEventListener("mousedown", onDown);
+        document.addEventListener("mouseup", onUp);
+
+        $cropArea.addEventListener("touchstart", onDown);
+        document.addEventListener("touchend", onUp);
+
+        function onMove(e: MouseEvent | TouchEvent) {
             if (!mouseDown) return;
             if (!target) return;
             if (!$cropArea) return;
 
-            const mousePos = {x: e.x, y: e.y};
+            let mousePos;
+
+            if (e instanceof MouseEvent) {
+                mousePos = {x: e.x, y: e.y};
+            } else {
+                mousePos = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+            }
+
             const diff = {
                 x: mousePos.x - drag_start_pos.x,
                 y: mousePos.y - drag_start_pos.y
@@ -135,7 +161,10 @@
             if (old_distance !== distance || old_position.left !== position.left || old_position.top !== position.top) {
                 renderCircle();
             }
-        })
+        }
+
+        $cropArea.addEventListener("mousemove", onMove);
+        $cropArea.addEventListener("touchmove", onMove);
     };
 
     const loading = writable(false);
@@ -185,9 +214,25 @@
         if (files.length === 0) return;
 
         const file = files[0];
-        if (!accepted.includes(file.type)) return;
+        if (!accepted.includes(file.type)) {
+            toastStore.trigger({
+                message: "File type not supported! (jpeg/jpg/png)",
+                background: "variant-filled-error",
+                hideDismiss: true,
+                timeout: 5000,
+            })
+            return;
+        }
         const filesize = ((file.size/1024)/1024); // MB
-        if (filesize > 1) return;
+        if (filesize > 1) {
+            toastStore.trigger({
+                message: "Image to big. (max 1MB)",
+                background: "variant-filled-error",
+                hideDismiss: true,
+                timeout: 5000,
+            })
+            return;
+        }
 
         image_type = file.type;
 
@@ -202,10 +247,18 @@
 
         reader.readAsDataURL(file);
     }
+
+    onMount(() => {
+        setTimeout(() => {
+            enableCropping()
+        }, 100)
+    })
 </script>
 
+<Toast/>
+
 <div class="w-full h-full grid items-center">
-    <div class="m-auto w-fit max-w-4xl p-5 shadow-stance rounded-md">
+    <div class="m-auto w-fit max-w-4xl p-5 md:shadow-stance rounded-md">
         {#if $image_url === ''}
             <FileDropzone name="files" bind:files={files} on:change={onChangeHandler} accept=".png,.jpg,.jpeg"
                           multiple={false}>

@@ -4,7 +4,12 @@
     import {writable} from "svelte/store";
     import {onMount} from "svelte";
     import VerifyWith2FA from "../modules/modals/VerifyWith2FA.svelte";
+    import UserSearch from "../modules/other/UserSearch.svelte";
 </script>
+
+<style>
+
+</style>
 
 <div class="container h-[200vh] mx-auto flex justify-center">
     <div class="space-y-5">
@@ -21,10 +26,19 @@
         <div class="w-full h-56 p-5 rounded-md shadow-stance-invert">
             <p>I Love this shadow</p>
         </div>
-        <div class="w-full h-56 p-5 rounded-md shadow-stance">
+        <div class="w-full h-56 p-5 rounded-md shadow-stance duration-200">
             <p>I Love this shadow too</p>
         </div>
-        <img src={$currentUser?.avatar_url}>
+
+        <button class="btn btn-3d-primary variant-filled-primary">
+            Press Me
+        </button>
+
+        <button class="btn btn-3d-transparent">
+            Press Me
+        </button>
+
+        <UserSearch/>
     </div>
 </div>
 

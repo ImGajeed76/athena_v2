@@ -82,30 +82,31 @@
 
                 <div class="pt-7 px-3 h-full relative">
                     <ul class="list">
-                        <li class="btn py-2 pl-3 hover:shadow-stance duration-200 justify-start">
-                                    <span>
+                        <li>
+                            <button class="py-2 pl-3 flex items-center w-full btn btn-3d-transparent duration-200 justify-start" on:click={() => {
+                                        drawerStore.close();
+                                        goto('/account')
+                                    }}>
+                                    <span class="mr-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16"
                                              height="16">
                                             <path d="M10.561 8.073a6.005 6.005 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6.004 6.004 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0ZM10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z">
                                             </path>
                                         </svg>
                                     </span>
-                            <button on:click={() => {
-                                        drawerStore.close();
-                                        goto('/account')
-                                    }}>Account
+                                Account
                             </button>
                         </li>
-
                     </ul>
                     <hr class="h-[2px] bg-surface-500-400-token my-2">
 
                     <button class="absolute bottom-0 w-full mb-5 text-error-500 hover:shadow-stance btn hover:bg-error-200 flex items-center"
-                        on:click={logout}
+                            on:click={logout}
                     >
                         <span class="mr-0">Logout</span>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-                            <path fill="#f22c5d" d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm10.44 4.5-1.97-1.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.97-1.97H6.75a.75.75 0 0 1 0-1.5Z"></path>
+                            <path fill="#f22c5d"
+                                  d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm10.44 4.5-1.97-1.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.97-1.97H6.75a.75.75 0 0 1 0-1.5Z"></path>
                         </svg>
                     </button>
                 </div>

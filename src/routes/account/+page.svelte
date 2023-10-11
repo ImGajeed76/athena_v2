@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {ModalComponent} from "@skeletonlabs/skeleton";
     import {Avatar, getModalStore, TableOfContents, tocCrawler} from '@skeletonlabs/skeleton';
-    import {currentUser, supabase, updateMetadata} from "$lib/database";
+    import {currentUser, supabase, updateUsername} from "$lib/database";
     import {writable} from "svelte/store";
     import CodeModalSix from "../../modules/modals/CodeModalSix.svelte";
     import PasswordCheck from "../../modules/auth/PasswordCheck.svelte";
@@ -31,9 +31,8 @@
 
     async function saveChanges() {
         if ($currentUser && $userName !== "") {
-            $currentUser.username = $userName;
+            await updateUsername($userName);
             $userName = "";
-            await updateMetadata();
         }
         if ($password !== "") await updatePassword();
 
@@ -132,8 +131,8 @@
 </script>
 
 {#if $currentUser}
-    <div class="absolute w-full bottom-0 grid grid-cols-[auto_1fr]">
-        <div class="lg:w-96 md:w-72 mx-5 h-full"></div>
+    <div class="absolute w-full bottom-0 grid lg:grid-cols-[auto_1fr]">
+        <div class="xl:w-96 lg:w-72 mx-5 h-full"></div>
         <div class="mx-auto max-w-2xl w-fit h-fit z-10 rounded-md">
             <button class="btn variant-ghost-error shadow-2xl ease-in-out transition-all {!$changesMade ? 'opacity-0 invisible mb-0' : 'opacity-100 mb-10'}"
                     on:click={saveChanges}>
@@ -142,9 +141,9 @@
         </div>
     </div>
 
-    <div class="w-full h-full grid grid-cols-[auto_1fr]">
-        <div class="w-full h-full pl-5 pb-5">
-            <div class="lg:w-96 md:w-72 mx-5 h-full shadow-stance rounded-md p-5">
+    <div class="w-full h-full grid lg:grid-cols-[auto_1fr]">
+        <div class="w-full h-full lg:pl-5 lg:pb-5 scale-90 lg:scale-100">
+            <div class="xl:w-96 lg:w-72 lg:mx-5 w-full h-full shadow-stance rounded-md p-5">
                 <TableOfContents>
                     <div class="flex items-center h-10">
                         <Avatar width="w-10 mr-3" initials="{$currentUser?.short_username || 'AB'}"
@@ -154,14 +153,14 @@
                 </TableOfContents>
             </div>
         </div>
-        <div class="w-full h-full max-w-5xl p-5 pb-10 pr-10 pt-5 m-auto"
+        <div class="w-full h-full max-w-5xl pb-10 lg:pr-10 lg:pt-5 lg:m-auto"
              use:tocCrawler={{ mode: 'generate' }}>
-            <div class="w-full h-full overflow-y-auto">
+            <div class="w-full h-full lg:overflow-y-auto scale-90 lg:scale-100">
                 <h2 class="h2" id="public-profile">Public profile</h2>
 
                 <hr class="w-full h-[2px] my-4 bg-gray-300 border-0">
-                <div class="grid grid-cols-[1fr_auto]">
-                    <div class="m-5 w-full">
+                <div class="grid md:grid-cols-[1fr_auto]">
+                    <div class="lg:m-5 mb-5 w-full">
                         <label for="username" class="h4 mb-2">Update Username</label>
                         <input type="text" id="username"
                                class="w-96 h-10 rounded-md input p-4"
@@ -169,10 +168,10 @@
                                placeholder="Username"
                         >
                     </div>
-                    <div class="m-5 mr-10">
+                    <div class="lg:m-5 md:mr-10 mb-5 md:mb-0">
                         <p class="mb-3 h4">Profile picture</p>
                         <div class="relative w-52 h-52">
-                            <Avatar width="w-52 mr-3" initials="{$currentUser?.short_username || 'AB'}"
+                            <Avatar width="w-52 md:mr-3" initials="{$currentUser?.short_username || 'AB'}"
                                     src="{$currentUser?.avatar_url || ''}"></Avatar>
                             <a href="/account/change-avatar" class="btn variant-ghost btn-sm flex items-center bottom-0 left-0 absolute bg-surface-200 mb-5 hover:shadow-stance">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"
@@ -185,20 +184,17 @@
                     </div>
                 </div>
 
-                <h2 class="sr-only" id="account">Account</h2>
-
-
                 <h2 class="h2" id="authentication">Password and authentication</h2>
-                <hr class="w-full h-[2px] my-4 bg-gray-300 border-0">
+                <hr class="w-full h-[2px] lg:my-4 bg-gray-300 border-0">
 
-                <div class="w-96 p-5 flex flex-col">
+                <div class="w-96 lg:p-5 pb-0.5 pt-5 flex flex-col">
                     <PasswordCheck passed={passed} password={password} passPassed={passPassed} message={message}
                                    loading={loading}>
                         <p class="h4 mb-2">Update Password</p>
                     </PasswordCheck>
                 </div>
 
-                <div class="p-5">
+                <div class="lg:p-5 pb-0.5 pt-5">
                     <p class="h4 mb-2 ml-2">2 Factor authentication</p>
                     {#if $currentUser.aal.currentLevel}
                         {#if $currentUser.aal.currentLevel.toString() === "aal1"}
