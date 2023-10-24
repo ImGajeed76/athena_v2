@@ -81,10 +81,10 @@
 
             if (inBookBounds) {
                 imageElement.style.cursor = "pointer";
-                imageElement.src = "athena_404_page_book_out.png";
+                imageElement.src = "/athena_404_page_book_out.png";
             } else {
                 imageElement.style.cursor = "default";
-                imageElement.src = "athena_404_page.png";
+                imageElement.src = "/athena_404_page.png";
             }
         });
 
@@ -103,9 +103,9 @@
 </script>
 
 
-<img src="athena_404_page_book_out.png" alt="Cached Background" class="sr-only">
+<img src="/athena_404_page_book_out.png" alt="Cached Background" class="sr-only">
 
 <div class="w-screen h-screen fixed top-0 left-0">
-    <img bind:this={imageElement} src="athena_404_page.png" alt="Background"
+    <img bind:this={imageElement} src="/athena_404_page.png" alt="Background"
          class="w-full h-full object-cover object-bottom">
 </div>
