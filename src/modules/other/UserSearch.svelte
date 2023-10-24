@@ -83,5 +83,5 @@
         </div>
     {/if}
 
-    <img class="w-12 rounded-full" src="">
+    <img class="w-12 rounded-full" src="" alt="">
 </div>

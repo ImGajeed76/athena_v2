@@ -1,5 +1,5 @@
-import {AuthError, createClient} from "@supabase/supabase-js";
-import type {AMREntry, AuthenticatorAssuranceLevels, UserResponse} from "@supabase/supabase-js";
+import {createClient} from "@supabase/supabase-js";
+import type {AMREntry, AuthenticatorAssuranceLevels, UserResponse, AuthError} from "@supabase/supabase-js";
 import {PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_IN_PROD} from "$env/static/public";
 import {get, writable} from "svelte/store";
 import {decode} from 'base64-arraybuffer';
