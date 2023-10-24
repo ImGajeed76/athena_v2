@@ -7,17 +7,16 @@
         AppShell,
         Avatar,
         Drawer,
-        getDrawerStore, getModalStore,
+        getDrawerStore,
         initializeStores,
         Modal,
         storePopup,
         Toast
     } from '@skeletonlabs/skeleton';
-    import {writable} from "svelte/store";
     import {goto} from "$app/navigation";
     import {onMount} from "svelte";
     import {page} from "$app/stores";
-    import {currentUser, get2FAid, loggedIn, logout, setupComplete} from "$lib/database";
+    import {currentUser, get2FAid, loggedIn, logout} from "$lib/database";
 
     storePopup.set({computePosition, autoUpdate, flip, shift, offset, arrow});
     initializeStores();
@@ -33,12 +32,6 @@
             position: 'right',
         })
     }
-
-    setupComplete.subscribe((value) => {
-        if (!value && $page.url.pathname !== '/complete_setup') {
-            goto('/account#public-profile')
-        }
-    })
 
     onMount(() => {
         page.subscribe((value) => {
@@ -83,7 +76,8 @@
                 <div class="pt-7 px-3 h-full relative">
                     <ul class="list">
                         <li>
-                            <button class="py-2 pl-3 flex items-center w-full btn btn-3d-transparent duration-200 justify-start" on:click={() => {
+                            <button class="py-2 pl-3 flex items-center w-full btn btn-3d-transparent duration-200 justify-start"
+                                    on:click={() => {
                                         drawerStore.close();
                                         goto('/account')
                                     }}>
