@@ -26,15 +26,12 @@ let currentUserData: null | {
     meta_data: any
 } = null
 
-export const setupComplete = writable(true);
-
 export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
 if (PUBLIC_IN_PROD === "true") supabase.auth.refreshSession().then(onMount);
 else onMount();
 
 function onMount() {
-    console.log("Supabase mounted");
     supabase.auth.onAuthStateChange((event, session) => {
         loggedIn.set(session !== null);
         updateCurrentUser();
@@ -49,10 +46,6 @@ export function signUpWithEmail(email: string, password: string) {
         password,
         options: {
             emailRedirectTo: window.location.origin,
-            data: {
-                username: null,
-                avatar_url: null,
-            }
         }
     })
 }
@@ -220,8 +213,6 @@ async function updateCurrentUser() {
     }
 
     let username = await getUsername();
-    if (username === "") setupComplete.set(false);
-
     username = username || currentUserData.email.split("@")[0];
     const short_username = username.match(/[A-Z]/g)?.slice(0, 2).join("") || username.slice(0, 2).toUpperCase();
 
@@ -351,6 +342,7 @@ export async function maybeCreateUserRow() {
             .from("users")
             .insert({
                 email: currentUserData.email,
+                username: currentUserData.email.split("@")[0],
             })
 
         if (insertError) {

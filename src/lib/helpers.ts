@@ -16,3 +16,20 @@ export function generateRandomPassword(length = 16) {
 export function copy(object: any) {
     return JSON.parse(JSON.stringify(object));
 }
+
+export function shortUUID() {
+    const now = Date.now();
+    const random = 999;
+    const value = parseInt(`${random}${now}`);
+    return numberToBase64(value);
+}
+
+export function numberToBase64(num: number) {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let base64 = "";
+    while (num > 0) {
+        base64 += chars[num % 64];
+        num = Math.floor(num / 64);
+    }
+    return base64;
+}
