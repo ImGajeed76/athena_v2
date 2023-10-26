@@ -4,6 +4,7 @@
     import {writable} from "svelte/store";
     import {onMount} from "svelte";
     import {page} from "$app/stores";
+    import {ProgressBar} from "@skeletonlabs/skeleton";
 
     enum Screen {
         Start,
@@ -19,40 +20,12 @@
         "avec,mit\n" +
         "la cuisine,die Küche\n" +
         "ecoutez,hört\n" +
-        "nous,wir\n" +
-        "vous,ihr\n" +
-        "combien,wie viel\n" +
-        "comment,wie\n" +
-        "qui,wer\n" +
-        "quoi,was\n" +
-        "où,wo\n" +
-        "pourquoi,warum\n" +
-        "il ya,es gibt\n" +
-        "c'est,das ist\n" +
-        "ce sont,das sind\n" +
-        "qu'est-ce que,was ...\n" +
-        "Qu'est-ce qu'il y a ...,Was hat es ...\n" +
-        "est,ist\n" +
-        "quelqu'un,jemand\n" +
-        "se moquer,sich lustig machen\n" +
-        "remis,übergeben\n" +
-        "la veille de,am Tag vor\n" +
-        "ordinaire,gewöhnlich\n" +
-        "puis,dann\n" +
-        "pour,für\n" +
-        "sortir,ausgehen\n" +
-        "tant pis,Da kann man nichts machen!; Schade!\n" +
-        "je dois,ich muss\n" +
-        "souvent,oft\n" +
-        "le plus diificile,das schwierigste\n" +
-        "du moins,zumindest\n" +
-        "Qui est-ce?,Wer ist das?\n" +
-        "jamais,niemals\n" +
-        "tout d'un coup,plötzlich");
+        "nous,wir");
 
-    const trainer = new Trainer(trainingSet);
+    const trainer = new Trainer(trainingSet, undefined, "value");
 
-    const screen = writable<Screen>(1);
+    const screen = writable<Screen>(Screen.Start);
+    const round = writable<number>(0);
 
     const currentCard = writable<Card>();
 
@@ -65,6 +38,10 @@
     const input_selected_option = writable<number>(0);
 
     const updateResponse = writable<UpdateCardReturn>();
+
+    const upperProgress1000 = writable<number>(0);
+    const upperProgress = writable<number>(0);
+    const updateProgress = writable<boolean>(false);
 
     card_title.subscribe(() => {
         setTimeout(() => {
@@ -113,17 +90,22 @@
 
     function selectAnswer(card: Card) {
         input_selected_option.set($input_options.indexOf(card));
-        updateResponse.set(trainer.updateCard($currentCard, trainer.round_side, trainer.round_side === Side.Value ? card.value : card.definition, 0));
-        screen.set(Screen.Card_End);
-        if (!$updateResponse.error && $updateResponse.correct) {
-            setTimeout(() => {
-                screen.set(Screen.Card);
-            }, 1000)
-        }
+        update(trainer.round_side === Side.Value ? card.value : card.definition);
     }
 
     function submitAnswer() {
-        updateResponse.set(trainer.updateCard($currentCard, trainer.round_side, $input_value, 0));
+        update($input_value);
+    }
+
+    function update(answer: string) {
+        if (!$currentCard) {
+            console.error("No current card to update");
+            return;
+        }
+
+        updateProgress.set(true);
+
+        updateResponse.set(trainer.updateCard($currentCard, trainer.round_side, answer, 0));
         screen.set(Screen.Card_End);
         if (!$updateResponse.error && $updateResponse.correct) {
             setTimeout(() => {
@@ -133,8 +115,17 @@
     }
 
     function nextCard() {
+        if ($round !== trainer.round) {
+            round.set(trainer.round);
+            screen.set(Screen.Round_End);
+            return;
+        }
+
         if (trainer.learn_percentage === 100) {
             screen.set(Screen.End);
+            initConfetti();
+            render();
+            return;
         }
 
         input_value.set("");
@@ -152,9 +143,10 @@
 
     onMount(() => {
         mounted = true;
+        round.set(trainer.round);
         window.addEventListener("keypress", (event) => {
             if (!$page.route.id?.startsWith("/cards/train/")) return;
-            if ($screen === Screen.Card_End) nextCard();
+            if ($screen === Screen.Card_End || $screen === Screen.Round_End) nextCard();
             if ($screen === Screen.Card && $input_type === "select") {
                 if (event.key === "1") selectAnswer($input_options[0]);
                 if (event.key === "2") selectAnswer($input_options[1]);
@@ -162,10 +154,161 @@
                 if (event.key === "4") selectAnswer($input_options[3]);
             }
         })
+
+        //---------Execution--------
+        setTimeout(() => {
+            initializeConfetti();
+
+            window.addEventListener('resize', function () {
+                resizeCanvas();
+            });
+        }, 1000)
+
     })
+
+    setInterval(() => {
+        if (!$updateProgress) return;
+        let currentLength = trainer.current_card_index;
+        if (currentLength === 0 && trainer.repetition_deck.length > 0) currentLength = trainer.current_deck_length;
+        upperProgress.set(currentLength / (trainer.current_deck_length + trainer.repetition_deck.length));
+        if ($upperProgress < 0 || !$upperProgress) upperProgress.set(0);
+        const diff = ($upperProgress * 1000) - $upperProgress1000;
+        upperProgress1000.set($upperProgress1000 + diff / 5);
+        if (diff < 0.1 && diff > -0.1) updateProgress.set(false);
+    }, 10)
+
+    let resizeCanvas: () => void;
+    let randomRange: (min: number, max: number) => number;
+    let initConfetti: () => void;
+    let render: () => void;
+
+    function initializeConfetti() {
+        //-----------Var Inits--------------
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let cx = ctx.canvas.width / 2;
+        let cy = ctx.canvas.height / 2;
+
+        let confetti = [];
+        const confettiCount = 300;
+        const gravity = 0.5;
+        const terminalVelocity = 5;
+        const drag = 0.075;
+        const colors = [
+            {front: 'red', back: 'darkred'},
+            {front: 'green', back: 'darkgreen'},
+            {front: 'blue', back: 'darkblue'},
+            {front: 'yellow', back: 'darkyellow'},
+            {front: 'orange', back: 'darkorange'},
+            {front: 'pink', back: 'darkpink'},
+            {front: 'purple', back: 'darkpurple'},
+            {front: 'turquoise', back: 'darkturquoise'}];
+
+
+        //-----------Functions--------------
+        resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            cx = ctx.canvas.width / 2;
+            cy = ctx.canvas.height / 2;
+        };
+
+        randomRange = (min, max) => Math.random() * (max - min) + min;
+
+        initConfetti = () => {
+            for (let i = 0; i < confettiCount; i++) {
+                confetti.push({
+                    color: colors[Math.floor(randomRange(0, colors.length))],
+                    dimensions: {
+                        x: randomRange(10, 20),
+                        y: randomRange(10, 30)
+                    },
+
+                    position: {
+                        x: randomRange(0, canvas.width),
+                        y: canvas.height - 1
+                    },
+
+                    rotation: randomRange(0, 2 * Math.PI),
+                    scale: {
+                        x: 1,
+                        y: 1
+                    },
+
+                    velocity: {
+                        x: randomRange(-25, 25),
+                        y: randomRange(0, -50)
+                    }
+                });
+
+
+            }
+        };
+
+        //---------Render-----------
+        render = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            confetti.forEach((confetto, index) => {
+                let width = confetto.dimensions.x * confetto.scale.x;
+                let height = confetto.dimensions.y * confetto.scale.y;
+
+                // Move canvas to position and rotate
+                ctx.translate(confetto.position.x, confetto.position.y);
+                ctx.rotate(confetto.rotation);
+
+                // Apply forces to velocity
+                confetto.velocity.x -= confetto.velocity.x * drag;
+                confetto.velocity.y = Math.min(confetto.velocity.y + gravity, terminalVelocity);
+                confetto.velocity.x += Math.random() > 0.5 ? Math.random() : -Math.random();
+
+                // Set position
+                confetto.position.x += confetto.velocity.x;
+                confetto.position.y += confetto.velocity.y;
+
+                // Delete confetti when out of frame
+                if (confetto.position.y >= canvas.height) confetti.splice(index, 1);
+
+                // Loop confetto x position
+                if (confetto.position.x > canvas.width) confetto.position.x = 0;
+                if (confetto.position.x < 0) confetto.position.x = canvas.width;
+
+                // Spin confetto by scaling y
+                confetto.scale.y = Math.cos(confetto.position.y * 0.1);
+                ctx.fillStyle = confetto.scale.y > 0 ? confetto.color.front : confetto.color.back;
+
+                // Draw confetti
+                ctx.fillRect(-width / 2, -height / 2, width, height);
+
+                // Reset transform matrix
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            });
+
+            // Fire off another round of confetti
+            if (confetti.length <= 10) initConfetti();
+
+            window.requestAnimationFrame(render);
+        };
+    }
+
+    function restart() {
+        trainer.restart();
+        screen.set(Screen.Start);
+    }
 </script>
 
+<style>
+    .confetti {
+        display: block;
+    }
+</style>
+
 <div class="fixed w-screen h-screen">
+    <canvas class="confetti absolute top-0 left-0 w-screen h-screen -z-10" id="canvas"></canvas>
+    <ProgressBar value={$upperProgress1000} max={1000} meter="bg-secondary-500"
+                 class="absolute -top-5 duration-200"/>
     {#if $screen === Screen.Start}
         <div class="w-full h-full grid items-center">
             <div class="w-full">
@@ -233,7 +376,7 @@
                                     {#each $input_options as option, index}
                                         {#if $input_selected_option === index && $updateResponse.correct}
                                             <div class="w-full h-full p-2">
-                                                <div class="w-full h-full btn bg-success-500 duration-200 p-4">
+                                                <div class="w-full h-full btn bg-success-600 duration-200 p-4">
                                                     {index + 1}.
                                                     <br>
                                                     <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
@@ -249,7 +392,7 @@
                                             </div>
                                         {:else if (trainer.round_side === Side.Value && option.value === $updateResponse.correct_answer) || (trainer.round_side === Side.Definition && option.definition === $updateResponse.correct_answer)}
                                             <div class="w-full h-full p-2">
-                                                <div class="w-full h-full btn bg-success-500 duration-200 p-4">
+                                                <div class="w-full h-full btn bg-success-600 duration-200 p-4">
                                                     {index + 1}.
                                                     <br>
                                                     <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
@@ -302,10 +445,42 @@
             {/if}
         </div>
     {:else if $screen === Screen.Round_End}
-        <h1>Round</h1>
-        <button on:click={() => $screen = Screen.End}>Next</button>
+        <div class="w-full h-full grid items-center">
+            <div class="m-auto w-full max-w-2xl h-96 shadow-stance p-10 rounded-md">
+                <div class="flex justify-between">
+                    <p class="text-3xl">Your doing great! 🎉</p>
+                    <p class="text-5xl text-success-600">{trainer.learn_percentage}%</p>
+                </div>
+                <p class="mt-8 mb-2">What you already have learned or seen:</p>
+                <div class="h-full max-h-52 w-full overflow-y-auto rounded-md p-2 shadow-inner bg-surface-200">
+                    {#each trainer.learned_deck.concat(trainer.current_deck) as card}
+                        <div class="w-full p-1">
+                            <div class="outline outline-1 w-full p-2 rounded-md outline-success-600 bg-success-100">
+                                <div class="w-full flex">
+                                    <p class="w-[40%]">{card.value}</p>
+                                    <p class="w-[40%]">{card.definition}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 h-fit mb-20 w-full bg-gray-100 p-5 flex justify-center">
+                <div class="max-w-2xl w-full flex items-center justify-between">
+                    <p>Press any key to continue...</p>
+                    <button class="btn variant-filled-primary" on:click={nextCard}>Continue</button>
+                </div>
+            </div>
+        </div>
     {:else if $screen === Screen.End}
-        <h1>End</h1>
-        <button on:click={() => $screen = Screen.Start}>Next</button>
+        <div class="w-full h-full grid items-center">
+            <div class="w-full">
+                <p class="text-center text-4xl w-full">🎉 Congratulations, you learned all your cards! 🎉</p>
+                <div class="w-full flex justify-center mt-5">
+                    <button class="btn variant-filled-primary btn-3d-primary" on:click={restart}>Restart Learning</button>
+                </div>
+            </div>
+        </div>
     {/if}
 </div>

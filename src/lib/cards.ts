@@ -57,6 +57,7 @@ export type LearningSettings = {
 
 export enum ErrorType {
     NoCards,
+    NoCardProvided,
 }
 
 export type NextCardReturn = {
@@ -109,8 +110,8 @@ export class Trainer {
         this.settings = settings || this.settings;
         this.side_to_learn = side_to_learn || this.side_to_learn;
 
-        this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED || card.definition_streak < CARD_LEARNED);
-        this.learned_deck = this.cards.filter(card => card.value_streak >= CARD_LEARNED && card.definition_streak >= CARD_LEARNED);
+        this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
+        this.learned_deck = this.cards.filter(card => card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED);
         this.chooseSideToLearn();
     }
 
@@ -122,21 +123,23 @@ export class Trainer {
         }
     }
 
-    get randomIndex(): number {
-        return Math.floor(Math.random() * this.cards.length);
+    randomIndex(stack: Card[]): number {
+        return Math.floor(Math.random() * stack.length);
     }
 
     randomCard(exclude?: Card[]): Card {
-        let card = this.cards[this.randomIndex];
+        let card = this.cards[this.randomIndex(this.cards)];
         while (exclude && exclude.includes(card)) {
-            card = this.cards[this.randomIndex];
+            card = this.cards[this.randomIndex(this.cards)];
         }
         return card;
     }
 
     get nextCard(): NextCardReturn {
-        if (this.repetition_deck.length > 0 && this.current_card_index == 0) {
-            const card = this.repetition_deck[this.randomIndex];
+        console.log(this.learned_deck, this.current_deck, this.repetition_deck, this.unlearned_deck)
+
+        if (this.repetition_deck.length > 0 && this.current_card_index >= this.current_deck_length) {
+            const card = this.repetition_deck[this.randomIndex(this.repetition_deck)];
             this.repetition_deck.splice(this.repetition_deck.indexOf(card), 1);
             return {card, side: this.round_side, error: null};
         }
@@ -144,7 +147,7 @@ export class Trainer {
         while (this.current_deck.length < this.current_deck_length) {
             if (this.unlearned_deck.length === 0) break;
 
-            const index = this.randomIndex;
+            const index = this.randomIndex(this.unlearned_deck);
             this.current_deck.push(this.unlearned_deck[index]);
             this.unlearned_deck.splice(index, 1);
         }
@@ -158,18 +161,20 @@ export class Trainer {
             }
         }
 
-        const card = this.current_deck[this.current_card_index];
-        this.current_card_index++;
-        if (this.current_card_index >= this.current_deck.length) {
-            this.current_card_index = 0;
-            this.round++;
-            this.chooseSideToLearn();
-        }
+        const card = this.current_deck[Math.min(this.current_card_index, this.current_deck.length - 1)];
+        console.log(this.learned_deck, this.current_deck, this.repetition_deck, this.unlearned_deck)
 
         return {card, side: this.round_side, error: null};
     }
 
     updateCard(card: Card, side: Side, answer: string, solve_time: number): UpdateCardReturn {
+        if (!card) return {
+            error: {
+                message: "No card provided",
+                type: ErrorType.NoCardProvided
+            }
+        }
+
         let correct = false;
         let right_answer = "";
 
@@ -210,7 +215,6 @@ export class Trainer {
             }
 
             card.addSolveTime(solve_time);
-            this.learn_percentage = Math.round((this.learned_deck.length / this.cards.length) * 100);
         } else {
             if (side === Side.Value) {
                 if (card.value_streak == 0) {
@@ -229,12 +233,36 @@ export class Trainer {
             }
         }
 
-        if (card.value_streak >= CARD_LEARNED && card.definition_streak >= CARD_LEARNED) {
+        if (card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED) {
             this.learned_deck.push(card);
             this.current_deck.splice(this.current_deck.indexOf(card), 1);
         }
 
+        this.current_card_index++;
+        if (this.current_card_index >= this.current_deck_length && this.repetition_deck.length === 0) {
+            this.current_card_index = 0;
+            this.round++;
+            this.chooseSideToLearn();
+            this.current_deck.sort(() => Math.random() - 0.5);
+        }
+
+
+        this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
+        console.log(this.learn_percentage)
+
         return {card, side, correct, correct_answer: right_answer, error: null};
+    }
+
+    restart() {
+        for (const card of this.cards) {
+            card.value_streak = 0;
+            card.definition_streak = 0;
+            card.clearSolveTimes();
+        }
+
+        this.learned_deck = [];
+        this.current_deck = [];
+        this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
     }
 }
 
