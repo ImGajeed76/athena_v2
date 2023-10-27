@@ -128,9 +128,13 @@ export class Trainer {
     }
 
     randomCard(exclude?: Card[]): Card {
+        const max_tries = 100;
+        let tries = 0;
         let card = this.cards[this.randomIndex(this.cards)];
         while (exclude && exclude.includes(card)) {
             card = this.cards[this.randomIndex(this.cards)];
+            tries++;
+            if (tries >= max_tries) break;
         }
         return card;
     }
@@ -151,6 +155,8 @@ export class Trainer {
             this.current_deck.push(this.unlearned_deck[index]);
             this.unlearned_deck.splice(index, 1);
         }
+
+        this.current_deck_length = Math.min(this.current_deck_length, this.current_deck.length);
 
         if (this.current_deck.length === 0) {
             return {
@@ -245,6 +251,11 @@ export class Trainer {
             this.chooseSideToLearn();
             this.current_deck.sort(() => Math.random() - 0.5);
         }
+        else if (this.current_deck.length === 0 && this.repetition_deck.length === 0) {
+            this.current_card_index = 0;
+            this.round++;
+            this.chooseSideToLearn();
+        }
 
 
         this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
@@ -263,6 +274,7 @@ export class Trainer {
         this.learned_deck = [];
         this.current_deck = [];
         this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
+        this.current_deck_length = 5;
     }
 }
 
@@ -271,7 +283,8 @@ export function importCards(text: string, card_separator: string = ",", pair_sep
     const pairs = text.split(pair_separator);
     for (const pair of pairs) {
         const [value, definition] = pair.split(card_separator);
-        cards.push(new Card(value, definition));
+        const card = new Card(value, definition);
+        cards.push(card);
     }
     return cards;
 }

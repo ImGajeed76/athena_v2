@@ -5,6 +5,7 @@
     import {onMount} from "svelte";
     import {page} from "$app/stores";
     import {ProgressBar} from "@skeletonlabs/skeleton";
+    import {goto} from "$app/navigation";
 
     enum Screen {
         Start,
@@ -16,13 +17,114 @@
 
     let mounted = false;
 
-    const trainingSet = importCards("dans,in\n" +
-        "avec,mit\n" +
-        "la cuisine,die Küche\n" +
-        "ecoutez,hört\n" +
-        "nous,wir");
+    const trainingSet = importCards("urgent\n" +
+        "dringend\n" +
+        "\n" +
+        "\n" +
+        "prolific\n" +
+        "produktiv\n" +
+        "\n" +
+        "\n" +
+        "chain of hotels\n" +
+        "Hotelkette\n" +
+        "\n" +
+        "\n" +
+        "to assume\n" +
+        "annehmen, vermuten\n" +
+        "\n" +
+        "\n" +
+        "to tremble\n" +
+        "zittern, beben\n" +
+        "\n" +
+        "\n" +
+        "to require\n" +
+        "benötigen, erfordern\n" +
+        "\n" +
+        "\n" +
+        "to accomplish\n" +
+        "vollbringen, erreichen\n" +
+        "\n" +
+        "\n" +
+        "to stride\n" +
+        "schreiten\n" +
+        "\n" +
+        "\n" +
+        "to scan\n" +
+        "überfliegen, durchsehen\n" +
+        "\n" +
+        "\n" +
+        "to suggest\n" +
+        "vorschlagen, empfehlen\n" +
+        "\n" +
+        "\n" +
+        "to peer\n" +
+        "spähen\n" +
+        "\n" +
+        "\n" +
+        "annual\n" +
+        "jährlich, Jahres-\n" +
+        "\n" +
+        "\n" +
+        "to usher\n" +
+        "einleiten\n" +
+        "\n" +
+        "\n" +
+        "pretentious\n" +
+        "angeberisch, überheblich\n" +
+        "\n" +
+        "\n" +
+        "genuinely\n" +
+        "wirklich, aufrichtig\n" +
+        "\n" +
+        "\n" +
+        "divorce\n" +
+        "sich scheiden lassen\n" +
+        "\n" +
+        "\n" +
+        "agenda\n" +
+        "Tagesordnung\n" +
+        "\n" +
+        "\n" +
+        "to refuse\n" +
+        "ablehnen\n" +
+        "\n" +
+        "\n" +
+        "burdensome\n" +
+        "lästig, beschwerlich\n" +
+        "\n" +
+        "\n" +
+        "carriage\n" +
+        "Kutsche\n" +
+        "\n" +
+        "\n" +
+        "crowd\n" +
+        "Menschenmenge\n" +
+        "\n" +
+        "\n" +
+        "to displease\n" +
+        "missfallen\n" +
+        "\n" +
+        "\n" +
+        "to delay\n" +
+        "verzögern\n" +
+        "\n" +
+        "\n" +
+        "device\n" +
+        "Gerät\n" +
+        "\n" +
+        "\n" +
+        "to ignite\n" +
+        "entzünden\n" +
+        "\n" +
+        "\n" +
+        "to consider\n" +
+        "in Betracht ziehen\n" +
+        "\n" +
+        "\n" +
+        "to admit\n" +
+        "zugeben", "\n", "\n\n\n");
 
-    const trainer = new Trainer(trainingSet, undefined, "value");
+    const trainer = new Trainer(trainingSet, undefined, "definition");
 
     const screen = writable<Screen>(Screen.Start);
     const round = writable<number>(0);
@@ -64,7 +166,7 @@
             input_type.set(card.value_streak > 0 ? "text" : "select");
             if (card.value_streak === 0) {
                 const options = [card];
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < Math.min(3, trainer.cards.length - 1); i++) {
                     options.push(trainer.randomCard(options));
                 }
                 options.sort(() => Math.random() - 0.5);
@@ -144,15 +246,23 @@
     onMount(() => {
         mounted = true;
         round.set(trainer.round);
+
+        console.log(trainer)
+
+        if (trainer.learned_deck.length > 0) {
+            screen.set(Screen.Card);
+        }
+
         window.addEventListener("keypress", (event) => {
             if (!$page.route.id?.startsWith("/cards/train/")) return;
             if ($screen === Screen.Card_End || $screen === Screen.Round_End) nextCard();
             if ($screen === Screen.Card && $input_type === "select") {
-                if (event.key === "1") selectAnswer($input_options[0]);
-                if (event.key === "2") selectAnswer($input_options[1]);
-                if (event.key === "3") selectAnswer($input_options[2]);
-                if (event.key === "4") selectAnswer($input_options[3]);
+                if (event.key === "1" && $input_options.length > 0) selectAnswer($input_options[0]);
+                if (event.key === "2" && $input_options.length > 1) selectAnswer($input_options[1]);
+                if (event.key === "3" && $input_options.length > 2) selectAnswer($input_options[2]);
+                if (event.key === "4" && $input_options.length > 3) selectAnswer($input_options[3]);
             }
+            if (event.key === "Escape") escape();
         })
 
         //---------Execution--------
@@ -184,14 +294,22 @@
 
     function initializeConfetti() {
         //-----------Var Inits--------------
-        let canvas = document.getElementById("canvas");
-        let ctx = canvas.getContext("2d");
+        let canvas = document.getElementById("canvas") as HTMLCanvasElement;
+        if (!canvas) return;
+        let ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let cx = ctx.canvas.width / 2;
         let cy = ctx.canvas.height / 2;
 
-        let confetti = [];
+        let confetti: {
+            color: { front: string, back: string },
+            dimensions: { x: number, y: number },
+            position: { x: number, y: number },
+            rotation: number,
+            scale: { x: number, y: number },
+            velocity: { x: number, y: number }
+        }[] = [];
         const confettiCount = 300;
         const gravity = 0.5;
         const terminalVelocity = 5;
@@ -286,9 +404,6 @@
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             });
 
-            // Fire off another round of confetti
-            if (confetti.length <= 10) initConfetti();
-
             window.requestAnimationFrame(render);
         };
     }
@@ -296,6 +411,10 @@
     function restart() {
         trainer.restart();
         screen.set(Screen.Start);
+    }
+
+    function escape() {
+        goto("/cards");
     }
 </script>
 
@@ -309,6 +428,15 @@
     <canvas class="confetti absolute top-0 left-0 w-screen h-screen -z-10" id="canvas"></canvas>
     <ProgressBar value={$upperProgress1000} max={1000} meter="bg-secondary-500"
                  class="absolute -top-5 duration-200"/>
+    <div class="absolute top-0 right-0 m-5 mr-9">
+        <button on:click={escape}
+                class="outline rounded-full p-1 outline-1 outline-gray-300 hover:bg-secondary-500 duration-200 hover:scale-110 hover:outline-none active:scale-90">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path fill-opacity="80%"
+                      d="M5.72 5.72a.75.75 0 0 1 1.06 0L12 10.94l5.22-5.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L13.06 12l5.22 5.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L12 13.06l-5.22 5.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L10.94 12 5.72 6.78a.75.75 0 0 1 0-1.06Z"></path>
+            </svg>
+        </button>
+    </div>
     {#if $screen === Screen.Start}
         <div class="w-full h-full grid items-center">
             <div class="w-full">
@@ -478,7 +606,12 @@
             <div class="w-full">
                 <p class="text-center text-4xl w-full">🎉 Congratulations, you learned all your cards! 🎉</p>
                 <div class="w-full flex justify-center mt-5">
-                    <button class="btn variant-filled-primary btn-3d-primary" on:click={restart}>Restart Learning</button>
+                    <div>
+                        <button class="btn variant-filled-primary btn-3d-primary ml-2" on:click={restart}>Restart Learning
+                        </button>
+                        <button class="btn variant-ghost btn-3d-ghost mr-2" on:click={escape}>Exit
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
