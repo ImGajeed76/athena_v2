@@ -17,6 +17,10 @@
     import {onMount} from "svelte";
     import {page} from "$app/stores";
     import {currentUser, get2FAid, loggedIn, logout} from "$lib/database";
+    import {dev} from '$app/environment';
+    import {inject} from '@vercel/analytics';
+
+    inject({mode: dev ? 'development' : 'production'});
 
     storePopup.set({computePosition, autoUpdate, flip, shift, offset, arrow});
     initializeStores();
