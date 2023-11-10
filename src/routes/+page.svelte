@@ -1,17 +1,8 @@
 <script lang="ts">
     import {onMount} from "svelte";
+    import {trueRandom} from "$lib/helpers";
 
     onMount(() => {
-        const easterEggMessage1 = "🐰🥚🐰🥚🐰🥚🐰🥚🐰🥚🐰🥚\n" +
-            "🥚 \t\t\t\t\t\t\t🐰\n" +
-            "🐰   If you are searching\t🥚\n" +
-            "🥚   for easter eggs, you \t🐰\n" +
-            "🐰   made it! Congrats 🥳\t🥚\n" +
-            "🥚\t\t\t\t\t\t\t🐰\n" +
-            "🐰   ---> /ee/Hy48Tz <---  \t🥚\n" +
-            "🥚\t\t\t\t\t\t\t🐰\n" +
-            "🐰🥚🐰🥚🐰🥚🐰🥚🐰🥚🐰🥚"
-
         const easterEggPath = window.location.origin + "/ee/Hy48Tz"
 
         const easterEggMessage2 = "" +

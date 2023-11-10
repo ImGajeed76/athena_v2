@@ -9,7 +9,7 @@
     export let passPassed: Writable<boolean>;
     export let passed: Writable<boolean> = writable(true);
 
-    export let defaultPassword: string = generateRandomPassword();
+    export let defaultPassword: string = "...";
 
     type Requirements = Record<string, {
         name: string,
@@ -58,7 +58,9 @@
     export let loading: Writable<boolean> = writable(false);
 
     const showPassword = writable(false);
-    onMount(() => {
+    onMount(async () => {
+        defaultPassword = await generateRandomPassword();
+
         showPassword.subscribe((value) => {
             const passwordElement = document.getElementById("password");
             if (!passwordElement) return;

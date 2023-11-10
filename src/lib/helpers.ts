@@ -1,14 +1,22 @@
-export function generateRandomPassword(length = 16) {
-    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()+}{[]?><'";
+import ShortUniqueId from "short-unique-id";
+
+export function getRandomFloat() {
+    let buffer = new Uint32Array(1);
+    window.crypto.getRandomValues(buffer);
+    return buffer[0] / (0xFFFFFFFF + 1);
+}
+
+export async function generateRandomPassword(length = 16): Promise<string> {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ23456789!@#$%^&*()+}{[]?><'";
     let password = "";
     for (let i = 0; i < length; i++) {
-        password += chars[Math.floor(Math.random() * chars.length)];
+        password += chars[Math.floor(getRandomFloat() * chars.length)];
     }
 
-    if (!/[A-Z]/.test(password)) return generateRandomPassword(length);
-    if (!/[a-z]/.test(password)) return generateRandomPassword(length);
-    if (!/[0-9]/.test(password)) return generateRandomPassword(length);
-    if (!/[!@#$%^&*()+}{[\]?><'"]/.test(password)) return generateRandomPassword(length);
+    if (!/[A-Z]/.test(password)) return await generateRandomPassword(length);
+    if (!/[a-z]/.test(password)) return await generateRandomPassword(length);
+    if (!/[0-9]/.test(password)) return await generateRandomPassword(length);
+    if (!/[!@#$%^&*()+}{[\]?><'"]/.test(password)) return await generateRandomPassword(length);
 
     return password;
 }
@@ -18,10 +26,8 @@ export function copy(object: any) {
 }
 
 export function shortUUID() {
-    const now = Date.now();
-    const random = 999;
-    const value = parseInt(`${random}${now}`);
-    return numberToBase64(value);
+    const { randomUUID } = new ShortUniqueId({length: 10});
+    return randomUUID();
 }
 
 export function numberToBase64(num: number) {
