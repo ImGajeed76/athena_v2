@@ -1,6 +1,5 @@
 <script lang="ts">
     import {onMount} from "svelte";
-    import {trueRandom} from "$lib/helpers";
 
     onMount(() => {
         const easterEggPath = window.location.origin + "/ee/Hy48Tz"

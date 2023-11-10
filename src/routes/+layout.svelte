@@ -18,6 +18,7 @@
     import {page} from "$app/stores";
     import {currentUser, get2FAid, loggedIn, logout} from "$lib/database";
     import {inject} from '@vercel/analytics';
+    import {formatStars, github_star_count, updateGithubStarCount} from "$lib/other";
 
     inject({mode: 'production'});
 
@@ -37,6 +38,8 @@
     }
 
     onMount(() => {
+        updateGithubStarCount();
+
         page.subscribe((value) => {
             let bar = document.getElementById('bar')!;
             if (value.status === 404) {
@@ -123,34 +126,47 @@
         <svelte:fragment slot="header">
             <div id="bar" class="sticky grid w-full items-center h-16 px-5 overflow-hidden shadow-xl">
                 <div class="w-full max-w-6xl mx-auto flex justify-between items-center">
-                    {#if $page.status === 404}
-                        <a href="/" class="h3 p-2 text-white">Home</a>
-                    {:else}
-                        <div class="flex items-center">
-                            <img src="/athenas_helmet_black.svg" alt="Helmet" class="h-8">
-                            <a href="/" class="h3 p-2">Athena</a>
+                    <div class="flex flex-row items-center">
+                        {#if $page.status === 404}
+                            <a href="/" class="h3 p-2 text-white">Home</a>
+                        {:else}
+                            <div class="flex items-center">
+                                <img src="/athenas_helmet_black.svg" alt="Helmet" class="h-8">
+                                <a href="/" class="h3 p-2">Athena</a>
+                            </div>
+                        {/if}
+                        <div class="mt-2 ml-5">
+                            <a href="/cards" class="hover:bg-gray-100 p-2 px-4 rounded-md duration-200">Cards</a>
                         </div>
-                    {/if}
-                    {#if $loggedIn}
-                        <button
-                                class="h-10 w-10 text-white rounded-full btn variant-ghost grid justify-center items-center"
-                                on:click={openAccountDrawer}
-                        >
-                            <Avatar width="w-10" initials="{$currentUser?.short_username || 'AB'}"
-                                    src="{$currentUser?.avatar_url || ''}"></Avatar>
-                        </button>
-                    {:else}
-                        <button
-                                class="h-10 w-10 text-white rounded-full btn variant-ghost grid justify-center items-center"
-                                on:click={() => {
+                    </div>
+                    <div class="flex flex-row">
+                        <a href="https://github.com/ImGajeed76/athena_v2" target="_blank" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" class="">
+                                <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
+                            </svg>
+                            <p class="ml-2">{formatStars($github_star_count)}</p>
+                        </a>
+                        {#if $loggedIn}
+                            <button
+                                    class="h-10 w-10 text-white rounded-full btn variant-ghost grid justify-center items-center"
+                                    on:click={openAccountDrawer}
+                            >
+                                <Avatar width="w-10" initials="{$currentUser?.short_username || 'AB'}"
+                                        src="{$currentUser?.avatar_url || ''}"></Avatar>
+                            </button>
+                        {:else}
+                            <button
+                                    class="h-10 w-10 text-white rounded-full btn variant-ghost grid justify-center items-center"
+                                    on:click={() => {
                                     goto('/login')
                                 }}
-                        >
-                            <svg viewBox="0 0 16 16" width="16" height="16">
-                                <path d="M4.243 4.757a3.757 3.757 0 1 1 5.851 3.119 6.006 6.006 0 0 1 3.9 5.339.75.75 0 0 1-.715.784H2.721a.75.75 0 0 1-.714-.784 6.006 6.006 0 0 1 3.9-5.34 3.753 3.753 0 0 1-1.664-3.118Z"></path>
-                            </svg>
-                        </button>
-                    {/if}
+                            >
+                                <svg viewBox="0 0 16 16" width="16" height="16">
+                                    <path d="M4.243 4.757a3.757 3.757 0 1 1 5.851 3.119 6.006 6.006 0 0 1 3.9 5.339.75.75 0 0 1-.715.784H2.721a.75.75 0 0 1-.714-.784 6.006 6.006 0 0 1 3.9-5.34 3.753 3.753 0 0 1-1.664-3.118Z"></path>
+                                </svg>
+                            </button>
+                        {/if}
+                    </div>
                 </div>
             </div>
         </svelte:fragment>

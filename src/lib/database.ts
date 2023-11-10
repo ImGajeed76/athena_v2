@@ -101,7 +101,7 @@ export async function get2FA_ID_OrCreateOne(): Promise<{
     } | null,
     error: AuthError | null,
 }> {
-    if (!loggedIn) {
+    if (!get(loggedIn)) {
         currentUser.set(null);
         return {data: null, error: null};
     }
@@ -127,7 +127,7 @@ export async function get2FA_ID_OrCreateOne(): Promise<{
 }
 
 export async function get2FAid() {
-    if (!loggedIn) {
+    if (!get(loggedIn)) {
         currentUser.set(null);
         return {data: null, error: null};
     }
@@ -235,13 +235,13 @@ async function updateCurrentUser() {
     })
 }
 
-export async function getUsername() {
+export async function getUsername(email?: string) {
     if (!currentUserData) return "";
 
     const {data, error} = await supabase
         .from("users")
         .select("username")
-        .eq("email", currentUserData.email)
+        .eq("email", email || currentUserData.email)
         .single();
 
     if (error) {

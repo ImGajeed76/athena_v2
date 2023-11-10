@@ -1,3 +1,7 @@
+import {get} from "svelte/store";
+import {currentUser, loggedIn, supabase} from "$lib/database";
+import {shortUUID} from "$lib/helpers";
+
 const CARD_LEARNED = 2;
 
 export enum Side {
@@ -250,8 +254,7 @@ export class Trainer {
             this.round++;
             this.chooseSideToLearn();
             this.current_deck.sort(() => Math.random() - 0.5);
-        }
-        else if (this.current_deck.length === 0 && this.repetition_deck.length === 0) {
+        } else if (this.current_deck.length === 0 && this.repetition_deck.length === 0) {
             this.current_card_index = 0;
             this.round++;
             this.chooseSideToLearn();
@@ -296,4 +299,81 @@ export function exportCards(cards: Card[], card_separator: string = ",", pair_se
     }
 
     return cards.map(card => `${card.value}${card_separator}${card.definition}`).join(pair_separator);
+}
+
+
+export async function getSetPreviews(): Promise<{
+    title: string;
+    short_uuid: string;
+    length: number;
+    author: string;
+}[]> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return [];
+    }
+
+    const {data, error} = await supabase
+        .from("cards")
+        .select("title, short_uuid, values, editors");
+
+    if (error) {
+        console.error(error);
+        return [];
+    }
+
+    const result: {
+        title: string;
+        short_uuid: string;
+        length: number;
+        author: string;
+    }[] = [];
+
+    for (const set of data) {
+        result.push({
+            title: set.title as string,
+            short_uuid: set.short_uuid as string,
+            length: set.values.length as number,
+            author: set.editors[0] as string,
+        })
+    }
+
+    return result;
+}
+
+export async function createNewSet(title: string = "Untitled"): Promise<string> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return "";
+    }
+
+    const short_uuid = shortUUID();
+
+    const {data, error} = await supabase
+        .from("cards")
+        .insert({
+            title,
+            short_uuid,
+            editors: [currentEmail],
+            private: true,
+            values: [],
+            definitions: [],
+        });
+
+    if (error) {
+        console.error(error);
+        return "";
+    }
+
+    return short_uuid;
+}
+
+export async function getSet(short_uuid: string) {
+
 }
