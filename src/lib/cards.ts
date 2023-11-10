@@ -174,7 +174,7 @@ export class Trainer {
     }
 
     updateCard(card: Card, side: Side, answer: string, solve_time: number): UpdateCardReturn {
-        if (!card) return {
+        if (card === undefined) return {
             error: {
                 message: "No card provided",
                 type: ErrorType.NoCardProvided

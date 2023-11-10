@@ -3,7 +3,6 @@ import type {Config} from 'tailwindcss';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 import {skeleton} from '@skeletonlabs/tw-plugin';
-import {athenaDarkTheme} from "./athena-dark-theme";
 import {athenaLightTheme} from "./athena-light-theme";
 
 export default {
@@ -24,7 +23,6 @@ export default {
         skeleton({
             themes: {
                 custom: [
-                    athenaDarkTheme,
                     athenaLightTheme
                 ]
             },

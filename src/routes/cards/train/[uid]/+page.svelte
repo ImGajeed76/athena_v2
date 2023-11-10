@@ -157,7 +157,7 @@
     })
 
     currentCard.subscribe((card) => {
-        if (!card) return;
+        if (card === undefined) return;
 
         if (trainer.round_side === Side.Value) {
             card_title.set(card.definition);
