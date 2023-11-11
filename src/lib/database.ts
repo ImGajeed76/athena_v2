@@ -3,6 +3,7 @@ import type {AMREntry, AuthenticatorAssuranceLevels, UserResponse, AuthError} fr
 import {PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_IN_PROD} from "$env/static/public";
 import {get, writable} from "svelte/store";
 import {decode} from 'base64-arraybuffer';
+import {page} from "$app/stores";
 
 export const loggedIn = writable(false);
 export const currentUser = writable<null | {
@@ -50,11 +51,11 @@ export function signUpWithEmail(email: string, password: string) {
     })
 }
 
-export function loginWithGitHub() {
+export function loginWithGitHub(redirect: string = "") {
     return supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-            redirectTo: window.location.origin,
+            redirectTo: window.location.origin + redirect,
         }
     });
 }

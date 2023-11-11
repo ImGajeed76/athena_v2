@@ -47,10 +47,6 @@
         }
         $state = "resend";
     }
-
-    async function resend() {
-
-    }
 </script>
 
 <div class="w-full h-full grid items-center">

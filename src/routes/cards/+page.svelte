@@ -26,7 +26,7 @@
     })
 
     async function createNew() {
-        goto("/cards/" + await createNewSet());
+        await goto("/cards/" + await createNewSet());
     }
 </script>
 
@@ -56,12 +56,12 @@
             {/each}
         </div>
     {:else}
-        <div class="w-full flex justify-center mb-2">
-            <span class="h5">You have no slides yet. Create your first one down below!</span>
+        <div class="w-full flex justify-center mb-5 mt-10">
+            <span class="h5">You have not created any sets yet. Create your first one down below!</span>
         </div>
     {/if}
     <div class="w-full flex justify-center">
-        <button class="btn btn-3d-transparent m-auto hover:bg-primary-200" on:click={createNew}>
+        <button class="btn variant-filled-primary btn-3d-primary" on:click={createNew}>
             New
         </button>
     </div>

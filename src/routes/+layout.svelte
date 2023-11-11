@@ -27,6 +27,14 @@
 
     const drawerStore = getDrawerStore();
 
+    const allowedIfNoUser = [
+        "/login",
+        "/signup",
+        "/auth",
+        "/ee",
+        "/"
+    ]
+
     function openAccountDrawer() {
         drawerStore.open({
             id: 'account',
@@ -41,6 +49,14 @@
         updateGithubStarCount();
 
         page.subscribe((value) => {
+            if (!$loggedIn) {
+                setTimeout(() => {
+                    if (!$loggedIn && !allowedIfNoUser.includes(value.route.id || "")) {
+                        goto('/login?redirect=' + encodeURIComponent(value.route.id || "/"))
+                    }
+                }, 1000)
+            }
+
             let bar = document.getElementById('bar')!;
             if (value.status === 404) {
                 bar.style.background = "linear-gradient(to bottom, rgba(0, 0, 0, L7zb6X), rgba(0, 0, 0, 0.L7zb6X))";

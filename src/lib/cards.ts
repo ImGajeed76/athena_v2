@@ -31,6 +31,21 @@ export class Card {
         this.definition = definition;
     }
 
+    import(card: Card) {
+        this.value = card.value;
+        this.value_example = card.value_example;
+        this.definition = card.definition;
+        this.definition_example = card.definition_example;
+        this.reference = card.reference;
+        this.value_streak = card.value_streak;
+        this.definition_streak = card.definition_streak;
+        this.value_seen = card.value_seen;
+        this.definition_seen = card.definition_seen;
+        this.solve_times = card.solve_times;
+        this.average_solve_time = card.average_solve_time;
+        return this;
+    }
+
     addValueExample(example: string) {
         this.value_example = example;
     }
@@ -119,6 +134,27 @@ export class Trainer {
         this.chooseSideToLearn();
     }
 
+    import(trainer: Trainer) {
+        this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
+        this.side_to_learn = trainer.side_to_learn;
+        this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
+        this.current_deck = trainer.current_deck.map(card => (new Card("", "")).import(card));
+        this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
+        this.repetition_deck = trainer.repetition_deck.map(card => (new Card("", "")).import(card));
+        this.current_card_index = trainer.current_card_index;
+        this.current_deck_length = trainer.current_deck_length;
+        this.learn_percentage = trainer.learn_percentage;
+        this.settings = trainer.settings;
+        this.round = trainer.round;
+        this.round_side = trainer.round_side;
+    }
+
+    refresh() {
+        this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
+        this.learned_deck = this.cards.filter(card => card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED);
+        this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
+    }
+
     chooseSideToLearn() {
         if (this.side_to_learn === "both") {
             this.round_side = Math.random() < 0.5 ? Side.Value : Side.Definition;
@@ -135,7 +171,7 @@ export class Trainer {
         const max_tries = 100;
         let tries = 0;
         let card = this.cards[this.randomIndex(this.cards)];
-        while (exclude && exclude.includes(card)) {
+        while (exclude && exclude.find(c => c.value === card.value && c.definition === card.definition)) {
             card = this.cards[this.randomIndex(this.cards)];
             tries++;
             if (tries >= max_tries) break;
@@ -374,6 +410,216 @@ export async function createNewSet(title: string = "Untitled"): Promise<string> 
     return short_uuid;
 }
 
-export async function getSet(short_uuid: string) {
+export async function getSet(short_uuid: string): Promise<{
+    data: {
+        set_uuid: string,
+        progress_uuid: string,
+        title: string,
+        authors: string[],
+        private: boolean,
+        values: string[],
+        definitions: string[],
+        trainer: Trainer,
+    } | null,
+    error: any
+}> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return {data: null, error: "Not logged in"};
+    }
 
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return {data: null, error: "No email"};
+    }
+
+    const result = {
+        set_uuid: short_uuid,
+        progress_uuid: "",
+        title: "",
+        authors: [],
+        private: false,
+        values: [],
+        definitions: [],
+        trainer: new Trainer([]),
+    };
+
+    const {data: set_data, error: set_error} = await supabase
+        .from("cards")
+        .select("*")
+        .eq("short_uuid", short_uuid)
+        .single();
+
+    if (set_error) {
+        console.error(set_error);
+        return {data: null, error: set_error};
+    }
+
+    if (!set_data) {
+        console.error("No set data");
+        return {data: null, error: "No set data"};
+    }
+
+    result.title = set_data.title;
+    result.authors = set_data.editors;
+    result.private = set_data.private;
+    result.values = set_data.values;
+    result.definitions = set_data.definitions;
+
+    const cards: Card[] = [];
+    for (let i = 0; i < set_data.values.length; i++) {
+        const card = new Card(set_data.values[i], set_data.definitions[i]);
+        cards.push(card);
+    }
+
+    const {data: progress_data, error: progress_error} = await supabase
+        .from("cards_progress")
+        .select("*")
+        .eq("original_uuid", short_uuid)
+        .single();
+
+    if (progress_error) {
+        if (progress_error.code === "PGRST116") {
+            const new_progress_data = {
+                original_uuid: short_uuid,
+                short_uuid: shortUUID(),
+                trainer: new Trainer(cards),
+                email: currentEmail,
+            }
+
+            const {error: new_progress_error} = await supabase
+                .from("cards_progress")
+                .insert(new_progress_data)
+
+            if (new_progress_error) {
+                console.error(new_progress_error);
+                return {data: null, error: new_progress_error};
+            }
+
+            result.progress_uuid = new_progress_data.short_uuid;
+            result.trainer = new_progress_data.trainer as Trainer;
+
+            return {data: result, error: null};
+        }
+        else {
+            console.error(progress_error);
+            return {data: null, error: progress_error};
+        }
+    }
+
+    if (!progress_data) {
+        console.error("No progress data");
+        return {data: null, error: "No progress data"};
+    }
+
+    result.progress_uuid = progress_data.short_uuid;
+    result.trainer.import(progress_data.trainer as Trainer);
+
+    if (result.trainer.cards.length !== result.values.length) {
+        for (let i = 0; i < result.values.length; i++) {
+            // if the card is not in the trainer, add it to the trainer
+            if (!result.trainer.cards.find(card => card.value === result.values[i] && card.definition === result.definitions[i])) {
+                const card = new Card(result.values[i], result.definitions[i]);
+                result.trainer.cards.push(card);
+            }
+        }
+
+        // if the trainer has more cards than the set, remove the extra cards
+        if (result.trainer.cards.length > result.values.length) {
+            for (let i = 0; i < result.trainer.cards.length; i++) {
+                if (!result.values.find(value => value === result.trainer.cards[i].value && result.definitions.find(definition => definition === result.trainer.cards[i].definition))) {
+                    result.trainer.cards.splice(i, 1);
+                }
+            }
+
+            for (let i = 0; i < result.trainer.current_deck.length; i++) {
+                if (!result.values.find(value => value === result.trainer.current_deck[i].value && result.definitions.find(definition => definition === result.trainer.current_deck[i].definition))) {
+                    result.trainer.current_deck.splice(i, 1);
+                }
+            }
+
+            for (let i = 0; i < result.trainer.learned_deck.length; i++) {
+                if (!result.values.find(value => value === result.trainer.learned_deck[i].value && result.definitions.find(definition => definition === result.trainer.learned_deck[i].definition))) {
+                    result.trainer.learned_deck.splice(i, 1);
+                }
+            }
+
+            for (let i = 0; i < result.trainer.unlearned_deck.length; i++) {
+                if (!result.values.find(value => value === result.trainer.unlearned_deck[i].value && result.definitions.find(definition => definition === result.trainer.unlearned_deck[i].definition))) {
+                    result.trainer.unlearned_deck.splice(i, 1);
+                }
+            }
+        }
+
+        result.trainer.refresh();
+    }
+
+    return {data: result, error: null};
+}
+
+export async function saveSet(set_uuid: string, title: string, values: string[], definitions: string[], private_set: boolean) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    const {data, error} = await supabase
+        .from("cards")
+        .update({
+            title,
+            values,
+            definitions,
+            private: private_set,
+        })
+        .eq("short_uuid", set_uuid);
+
+    if (error) {
+        console.error(error);
+        return "";
+    }
+
+    return set_uuid;
+}
+
+export async function saveProgress(progress_uuid: string, trainer: Trainer) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    const {data, error} = await supabase
+        .from("cards_progress")
+        .update({
+            trainer,
+        })
+        .eq("short_uuid", progress_uuid);
+
+    if (error) {
+        console.error(error);
+        return "";
+    }
+
+    console.log("saved progress")
+
+    return progress_uuid;
+}
+
+export async function deleteSet(set_uuid: string) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    const {data, error} = await supabase
+        .from("cards")
+        .delete()
+        .eq("short_uuid", set_uuid);
+
+    if (error) {
+        console.error(error);
+        return "";
+    }
+
+    return set_uuid;
 }
