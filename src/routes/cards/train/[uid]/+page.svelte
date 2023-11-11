@@ -141,7 +141,7 @@
     function setMounted() {
         trainer.import($set.trainer);
 
-        if (trainer.learn_percentage === 100) {
+        if (trainer.learn_percentage === 100 || trainer.cards.length === 0) {
             screen.set(Screen.End);
             return;
         }
