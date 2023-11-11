@@ -53,8 +53,8 @@
 
     async function addCard() {
         if ($set) {
-            $set.values.push("value")
-            $set.definitions.push("definition")
+            $set.values.push("")
+            $set.definitions.push("")
             $set.values = $set.values
         }
     }
@@ -76,7 +76,7 @@
 
         const currentEmail = get(currentUser)?.email;
         if (currentEmail) {
-            if (!set.authors.includes(currentEmail)) {
+            if (set && !set.authors.includes(currentEmail)) {
                 goto("/cards")
             }
         }
@@ -95,6 +95,14 @@
     async function togglePrivate() {
         $set.private = !$set.private;
         await updateSetPrivacy($set.set_uuid, $set.private);
+    }
+
+    async function importSet() {
+
+    }
+
+    async function exportSet() {
+
     }
 </script>
 
@@ -133,6 +141,10 @@
         </div>
 
         <div>
+            <div class="flex flex-row mb-2 ml-2">
+                <button class="mr-3" on:click={importSet}>Import</button>
+                <button class="mr-3" on:click={exportSet}>Export</button>
+            </div>
             <input class="text-4xl input" bind:value={$set.title}>
         </div>
 
@@ -153,10 +165,10 @@
                 <hr class="bg-surface-400 h-[2px]">
                 <div class="p-5 grid grid-cols-2">
                     <div class="pr-2">
-                        <input class="input" bind:value={value}>
+                        <input class="input" bind:value={value} placeholder="value">
                     </div>
                     <div class="pl-2">
-                        <input class="input" bind:value={$set.definitions[$set.values.indexOf(value)]}>
+                        <input class="input" bind:value={$set.definitions[$set.values.indexOf(value)]} placeholder="definition">
                     </div>
                 </div>
             </div>
