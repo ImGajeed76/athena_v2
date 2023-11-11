@@ -351,7 +351,8 @@ export async function getSetPreviews(): Promise<{
 
     const {data, error} = await supabase
         .from("cards")
-        .select("title, short_uuid, values, editors");
+        .select("title, short_uuid, values, editors")
+        .contains("editors", [get(currentUser)?.email as string]);
 
     if (error) {
         console.error(error);
@@ -614,6 +615,27 @@ export async function deleteSet(set_uuid: string) {
     const {data, error} = await supabase
         .from("cards")
         .delete()
+        .eq("short_uuid", set_uuid);
+
+    if (error) {
+        console.error(error);
+        return "";
+    }
+
+    return set_uuid;
+}
+
+export async function updateSetPrivacy(set_uuid: string, private_set: boolean) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    const {data, error} = await supabase
+        .from("cards")
+        .update({
+            private: private_set,
+        })
         .eq("short_uuid", set_uuid);
 
     if (error) {

@@ -5,7 +5,7 @@
     import {createNewSet, getSetPreviews} from "$lib/cards";
     import {ProgressRadial} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
-    import {getUsername, loggedIn} from "$lib/database";
+    import {getUsername, loggedIn, currentUser} from "$lib/database";
 
     const set_previews = writable<{
         title: string;
@@ -36,23 +36,30 @@
     </div>
 {:else}
     {#if $set_previews.length > 0}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl p-10 m-auto">
+
+        <div class="px-10 pt-10 pb-2">
+            <p class="text-xl">Your sets:</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl px-10 m-auto">
             {#each $set_previews as preview}
-                <div class="p-2 w-full h-full">
-                    <button class="rounded-md text-left w-full h-full shadow-lg hover:shadow-2xl duration-200 p-5 bg-surface-300 hover:bg-primary-100"
-                            on:click={() => goto("/cards/" + preview.short_uuid)}>
-                        <p class="font-bold text-gray-700">{preview.title}</p>
-                        <p class="text-gray-500">{preview.length} cards</p>
-                        <br>
-                        {#await getUsername(preview.author)}
-                            <p class="text-gray-500">{preview.author}</p>
-                        {:then username}
-                            <p class="text-gray-500">{username}</p>
-                        {:catch error}
-                            <p class="text-gray-500">{preview.author}</p>
-                        {/await}
-                    </button>
-                </div>
+                {#if preview.author === $currentUser?.email}
+                    <div class="p-2 w-full h-full">
+                        <button class="rounded-md text-left w-full h-full shadow-lg hover:shadow-2xl duration-200 p-5 bg-surface-300 hover:bg-primary-100"
+                                on:click={() => goto("/cards/" + preview.short_uuid)}>
+                            <p class="font-bold text-gray-700">{preview.title}</p>
+                            <p class="text-gray-500">{preview.length} cards</p>
+                            <br>
+                            {#await getUsername(preview.author)}
+                                <p class="text-gray-500">{preview.author}</p>
+                            {:then username}
+                                <p class="text-gray-500">{username}</p>
+                            {:catch error}
+                                <p class="text-gray-500">{preview.author}</p>
+                            {/await}
+                        </button>
+                    </div>
+                {/if}
             {/each}
         </div>
     {:else}
