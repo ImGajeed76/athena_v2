@@ -349,10 +349,16 @@ export async function getSetPreviews(): Promise<{
         return [];
     }
 
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return [];
+    }
+
     const {data, error} = await supabase
         .from("cards")
         .select("title, short_uuid, values, editors")
-        .contains("editors", [get(currentUser)?.email as string]);
+        .contains("editors", [currentEmail]);
 
     if (error) {
         console.error(error);

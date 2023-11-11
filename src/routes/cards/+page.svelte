@@ -17,6 +17,13 @@
     const loading = writable(true);
 
     onMount(async () => {
+        setTimeout(async () => {
+            if ($loggedIn && $loading) {
+                set_previews.set(await getSetPreviews())
+                loading.set(false);
+            }
+        }, 1000);
+
         loggedIn.subscribe(async (value) => {
             if (value && $loading) {
                 set_previews.set(await getSetPreviews())

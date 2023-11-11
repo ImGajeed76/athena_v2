@@ -84,13 +84,10 @@
     async function deleteThisSet() {
         const modal: ModalSettings = {
             type: 'prompt',
-            // Data
             title: 'Confirm Deletion',
             body: `Are you sure you want to delete this set? This action cannot be undone. Type "${$set.title}" to confirm.`,
-            // Populates the input value and attributes
             value: '',
             valueAttr: {type: 'text', minlength: $set.title.length, maxlength: $set.title.length, required: true},
-            // Returns the updated response value
             response: async (r: string) => {
                 if (r === $set.title) {
                     await deleteSet($set.set_uuid)
@@ -103,9 +100,20 @@
         modalStore.trigger(modal);
     }
 
-    async function togglePrivate() {
-        $set.private = !$set.private;
-        await updateSetPrivacy($set.set_uuid, $set.private);
+    function share() {
+        const modal: ModalSettings = {
+            type: 'confirm',
+            title: 'Share',
+            body: `Thank you for sharing this learning-sets! <br><br> <input class="input" value="${window.location.href}">`,
+            buttonTextCancel: 'Close',
+            buttonTextConfirm: 'Copy',
+            response: (r: boolean) => {
+                if (r) {
+                    navigator.clipboard.writeText(window.location.href)
+                }
+            },
+        };
+        modalStore.trigger(modal);
     }
 </script>
 
@@ -128,6 +136,9 @@
             </div>
 
             <div class="flex flex-row items-center">
+                <button class="btn" on:click={share}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M5.5 9.75v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V9.75a.25.25 0 0 0-.25-.25h-2.5a.75.75 0 0 1 0-1.5h2.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 18.25 22H5.75A1.75 1.75 0 0 1 4 20.25V9.75C4 8.784 4.784 8 5.75 8h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25Zm7.03-8.53 3.25 3.25a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215l-1.97-1.97v10.69a.75.75 0 0 1-1.5 0V3.56L9.28 5.53a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0Z"></path></svg>
+                </button>
                 {#if $currentUser && $set.authors.includes($currentUser.email || "")}
                     <button class="btn variant-filled-secondary btn-3d-secondary mr-2"
                             on:click={() => goto("/cards/edit/" + $set.set_uuid)}>Edit
@@ -136,15 +147,6 @@
                 <button class="btn variant-filled-primary btn-3d-primary"
                         on:click={() => goto("/cards/train/" + $set.set_uuid)}>Train
                 </button>
-                {#if $currentUser && $set.authors.includes($currentUser.email || "")}
-                    <button class="btn mt-1" on:click={togglePrivate}>
-                        {#if $set.private}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M4 4a4 4 0 0 1 8 0v2h.25c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 12.25 15h-8.5A1.75 1.75 0 0 1 2 13.25v-5.5C2 6.784 2.784 6 3.75 6H4Zm8.25 3.5h-8.5a.25.25 0 0 0-.25.25v5.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25ZM10.5 6V4a2.5 2.5 0 1 0-5 0v2Z"></path></svg>
-                        {:else}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM5.78 8.75a9.64 9.64 0 0 0 1.363 4.177c.255.426.542.832.857 1.215.245-.296.551-.705.857-1.215A9.64 9.64 0 0 0 10.22 8.75Zm4.44-1.5a9.64 9.64 0 0 0-1.363-4.177c-.307-.51-.612-.919-.857-1.215a9.927 9.927 0 0 0-.857 1.215A9.64 9.64 0 0 0 5.78 7.25Zm-5.944 1.5H1.543a6.507 6.507 0 0 0 4.666 5.5c-.123-.181-.24-.365-.352-.552-.715-1.192-1.437-2.874-1.581-4.948Zm-2.733-1.5h2.733c.144-2.074.866-3.756 1.58-4.948.12-.197.237-.381.353-.552a6.507 6.507 0 0 0-4.666 5.5Zm10.181 1.5c-.144 2.074-.866 3.756-1.58 4.948-.12.197-.237.381-.353.552a6.507 6.507 0 0 0 4.666-5.5Zm2.733-1.5a6.507 6.507 0 0 0-4.666-5.5c.123.181.24.365.353.552.714 1.192 1.436 2.874 1.58 4.948Z"></path></svg>
-                        {/if}
-                    </button>
-                {/if}
             </div>
         </div>
 
