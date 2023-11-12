@@ -199,6 +199,9 @@
                     loading.set(false)
                     setMounted();
                 }
+                if (new_set.error && new_set.error.code === "PGRST116") {
+                    await goto("/cards")
+                }
             }
         }, 1000)
 
@@ -209,6 +212,9 @@
                     set.set(new_set.data)
                     loading.set(false)
                     setMounted();
+                }
+                if (new_set.error && new_set.error.code === "PGRST116") {
+                    await goto("/cards")
                 }
             }
         })

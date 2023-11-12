@@ -36,6 +36,9 @@
                     set.set(new_set.data)
                     loading.set(false)
                 }
+                if (new_set.error && new_set.error.code === "PGRST116") {
+                    await goto("/cards")
+                }
             }
         }, 1000)
 
@@ -46,6 +49,9 @@
                     originalSet = JSON.stringify(new_set.data)
                     set.set(new_set.data)
                     loading.set(false)
+                }
+                if (new_set.error && new_set.error.code === "PGRST116") {
+                    await goto("/cards")
                 }
             }
         })
@@ -142,8 +148,8 @@
 
         <div>
             <div class="flex flex-row mb-2 ml-2">
-                <button class="mr-3" on:click={importSet}>Import</button>
-                <button class="mr-3" on:click={exportSet}>Export</button>
+                <button class="mr-3" on:click={importSet}></button>
+                <button class="mr-3" on:click={exportSet}></button>
             </div>
             <input class="text-4xl input" bind:value={$set.title}>
         </div>

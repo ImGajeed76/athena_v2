@@ -1,9 +1,8 @@
+import type {AMREntry, AuthenticatorAssuranceLevels, AuthError, UserResponse} from "@supabase/supabase-js";
 import {createClient} from "@supabase/supabase-js";
-import type {AMREntry, AuthenticatorAssuranceLevels, UserResponse, AuthError} from "@supabase/supabase-js";
-import {PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_IN_PROD} from "$env/static/public";
+import {PUBLIC_IN_PROD, PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL} from "$env/static/public";
 import {get, writable} from "svelte/store";
 import {decode} from 'base64-arraybuffer';
-import {page} from "$app/stores";
 
 export const loggedIn = writable(false);
 export const currentUser = writable<null | {
@@ -236,8 +235,14 @@ async function updateCurrentUser() {
     })
 }
 
+let usernameCash: Record<string, string> = {};
+
 export async function getUsername(email?: string) {
     if (!currentUserData) return "";
+
+    if (usernameCash[email || currentUserData.email]) {
+        return usernameCash[email || currentUserData.email];
+    }
 
     const {data, error} = await supabase
         .from("users")
@@ -251,13 +256,16 @@ export async function getUsername(email?: string) {
     }
 
     if (data.username === "" && currentUserData.meta_data.username) {
+        usernameCash[email || currentUserData.email] = currentUserData.meta_data.username;
         return currentUserData.meta_data.username;
     }
 
+    usernameCash[email || currentUserData.email] = data.username as string;
     return data.username as string
 }
 
 let imageCash: Record<string, string> = {};
+
 export async function getAvatar(avatar_url?: string): Promise<string | null> {
     if (!currentUserData) return null;
 

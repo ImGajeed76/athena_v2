@@ -343,26 +343,42 @@ export async function getSetPreviews(): Promise<{
     short_uuid: string;
     length: number;
     author: string;
-}[]> {
+}[] | null> {
     if (!get(loggedIn)) {
         console.log("Not logged in")
-        return [];
+        return null;
     }
 
     const currentEmail = get(currentUser)?.email;
     if (!currentEmail) {
         console.log("No email")
-        return [];
+        return null;
     }
 
-    const {data, error} = await supabase
+    const {data: progress_data, error: progress_error} = await supabase
+        .from("cards_progress")
+        .select("original_uuid, short_uuid")
+        .eq("email", currentEmail);
+
+    if (progress_error) {
+        console.error(progress_error);
+        return null;
+    }
+
+    const {data: set_data, error: set_error} = await supabase
         .from("cards")
         .select("title, short_uuid, values, editors")
-        .contains("editors", [currentEmail]);
+        .in("short_uuid", progress_data.map(set => set.original_uuid));
 
-    if (error) {
-        console.error(error);
-        return [];
+    if (set_error) {
+        console.error(set_error);
+        return null;
+    }
+
+    for (const progress of progress_data) {
+        if (!set_data.find(set => set.short_uuid === progress.original_uuid)) {
+            await deleteProgress(progress.short_uuid);
+        }
     }
 
     const result: {
@@ -372,7 +388,54 @@ export async function getSetPreviews(): Promise<{
         author: string;
     }[] = [];
 
-    for (const set of data) {
+    for (const set of set_data) {
+        result.push({
+            title: set.title as string,
+            short_uuid: set.short_uuid as string,
+            length: set.values.length as number,
+            author: set.editors[0] as string,
+        })
+    }
+
+    return result;
+}
+
+export async function getSetSearchPreviews(search: string): Promise<{
+    title: string;
+    short_uuid: string;
+    length: number;
+    author: string;
+}[] | null> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return null;
+    }
+
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return null;
+    }
+
+    const {data: cards_data, error: cards_error} = await supabase
+        .from("cards")
+        .select("title, short_uuid, values, editors")
+        .or(`title.ilike.%${search}%,short_uuid.ilike.%${search}%`)
+        .limit(4);
+
+    if (cards_error) {
+        console.error(cards_error);
+        return null;
+    }
+
+    const result: {
+        title: string;
+        short_uuid: string;
+        length: number;
+        author: string;
+    }[] = [];
+
+    for (const set of cards_data) {
         result.push({
             title: set.title as string,
             short_uuid: set.short_uuid as string,
@@ -508,8 +571,7 @@ export async function getSet(short_uuid: string): Promise<{
             result.trainer = new_progress_data.trainer as Trainer;
 
             return {data: result, error: null};
-        }
-        else {
+        } else {
             console.error(progress_error);
             return {data: null, error: progress_error};
         }
@@ -629,6 +691,25 @@ export async function deleteSet(set_uuid: string) {
     }
 
     return set_uuid;
+}
+
+export async function deleteProgress(progress_uuid: string) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    const {data, error} = await supabase
+        .from("cards_progress")
+        .delete()
+        .eq("short_uuid", progress_uuid);
+
+    if (error) {
+        console.error(error);
+        return "";
+    }
+
+    return progress_uuid;
 }
 
 export async function updateSetPrivacy(set_uuid: string, private_set: boolean) {

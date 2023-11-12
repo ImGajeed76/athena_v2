@@ -16,18 +16,24 @@
 
     const loading = writable(true);
 
-    onMount(async () => {
+    onMount(() => {
         setTimeout(async () => {
             if ($loggedIn && $loading) {
-                set_previews.set(await getSetPreviews())
-                loading.set(false);
+                const response = await getSetPreviews();
+                if (response) {
+                    set_previews.set(response)
+                    loading.set(false);
+                }
             }
         }, 1000);
 
         loggedIn.subscribe(async (value) => {
             if (value && $loading) {
-                set_previews.set(await getSetPreviews())
-                loading.set(false);
+                const response = await getSetPreviews();
+                if (response) {
+                    set_previews.set(response)
+                    loading.set(false);
+                }
             }
         })
     })
@@ -48,7 +54,7 @@
             <p class="text-xl">Your sets:</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl px-10 m-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl px-10 m-auto mb-5">
             {#each $set_previews as preview}
                 <div class="p-2 w-full h-full">
                     <button class="rounded-md text-left w-full h-full shadow-lg hover:shadow-2xl duration-200 p-5 bg-surface-300 hover:bg-primary-100"
@@ -72,9 +78,12 @@
             <span class="h5">You have not created any sets yet. Create your first one down below!</span>
         </div>
     {/if}
-    <div class="w-full flex justify-center">
-        <button class="btn variant-filled-primary btn-3d-primary" on:click={createNew}>
+    <div class="w-full flex flex-row justify-center">
+        <button class="mr-2 btn variant-filled-primary btn-3d-primary" on:click={createNew}>
             New
         </button>
+        <a href="/cards/find" class="ml-2 btn variant-filled-secondary btn-3d-secondary">
+            Find
+        </a>
     </div>
 {/if}
