@@ -57,22 +57,24 @@
 
     set.subscribe((set) => {
         if (set && set.trainer) {
+            const allCards = [...set.trainer.learned_deck, ...set.trainer.unlearned_deck, ...set.trainer.current_deck, ...set.trainer.repetition_deck]
+
             const levelZero: Card[] = []
-            for (const card of set.trainer.cards) {
-                if (card.value_streak + card.definition_streak <= 0 && !set.trainer.learned_deck.find((learnedCard) => learnedCard.value === card.value && learnedCard.definition === card.definition)) {
+            for (const card of allCards) {
+                if (card.value_streak === 0 && card.definition_streak === 0) {
                     levelZero.push(card)
                 }
             }
 
             const levelOne: Card[] = []
-            for (const card of set.trainer.cards) {
-                if (card.value_streak + card.definition_streak <= 2 && !set.trainer.learned_deck.find((learnedCard) => learnedCard.value === card.value && learnedCard.definition === card.definition) && !levelZero.includes(card as Card)) {
+            for (const card of allCards) {
+                if (!levelZero.includes(card as Card) && !set.trainer.learned_deck.includes(card as Card)) {
                     levelOne.push(card)
                 }
             }
 
             const levelTwo: Card[] = []
-            for (const card of set.trainer.cards) {
+            for (const card of allCards) {
                 if (!levelZero.includes(card as Card) && !levelOne.includes(card as Card)) {
                     levelTwo.push(card)
                 }
