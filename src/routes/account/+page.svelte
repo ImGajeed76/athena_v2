@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {ModalComponent} from "@skeletonlabs/skeleton";
     import {Avatar, getModalStore, TableOfContents, tocCrawler} from '@skeletonlabs/skeleton';
-    import {currentUser, supabase, updateUsername} from "$lib/database";
+    import {clearCash, currentUser, supabase, updateUsername} from "$lib/database";
     import {writable} from "svelte/store";
     import CodeModalSix from "../../modules/modals/CodeModalSix.svelte";
     import PasswordCheck from "../../modules/auth/PasswordCheck.svelte";
@@ -30,6 +30,8 @@
     }
 
     async function saveChanges() {
+        clearCash();
+
         if ($currentUser && $userName !== "") {
             await updateUsername($userName);
             $userName = "";

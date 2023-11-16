@@ -412,3 +412,11 @@ export async function uploadAvatar(base64: string, contentType: string): Promise
         .update({avatar: imagePath})
         .eq("email", currentUserData.email);
 }
+
+
+// ------- Other -------
+
+export function clearCash() {
+    usernameCash = {};
+    imageCash = {};
+}

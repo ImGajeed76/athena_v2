@@ -337,6 +337,28 @@ export function exportCards(cards: Card[], card_separator: string = ",", pair_se
     return cards.map(card => `${card.value}${card_separator}${card.definition}`).join(pair_separator);
 }
 
+export function CardsToArrays(cards: Card[]) {
+    const values: string[] = [];
+    const definitions: string[] = [];
+    for (const card of cards) {
+        values.push(card.value);
+        definitions.push(card.definition);
+    }
+    return {
+        values,
+        definitions
+    };
+}
+
+export function ArraysToCards(values: string[], definitions: string[]): Card[] {
+    const cards: Card[] = [];
+    for (let i = 0; i < values.length; i++) {
+        if (i >= definitions.length) break;
+        cards.push(new Card(values[i], definitions[i]))
+    }
+    return cards;
+}
+
 
 export async function getSetPreviews(): Promise<{
     title: string;

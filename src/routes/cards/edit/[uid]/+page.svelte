@@ -1,12 +1,15 @@
 <script lang="ts">
     import {get, writable} from "svelte/store";
     import type {Trainer} from "$lib/cards";
-    import {onMount} from "svelte";
     import {getSet, saveSet, updateSetPrivacy} from "$lib/cards";
+    import {onMount} from "svelte";
     import {page} from "$app/stores";
-    import {getUsername, loggedIn, currentUser} from "$lib/database";
-    import {ProgressRadial} from "@skeletonlabs/skeleton";
+    import {currentUser, getUsername, loggedIn} from "$lib/database";
+    import type {ModalComponent, ModalSettings} from "@skeletonlabs/skeleton";
+    import {getModalStore, ProgressRadial, RadioGroup, RadioItem} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
+    import ImportCards from "../../../../modules/modals/ImportCards.svelte";
+    import ExportCards from "../../../../modules/modals/ExportCards.svelte";
 
     const set = writable<{
         set_uuid: string,
@@ -26,6 +29,8 @@
     const authorUserName = writable<string>("")
 
     const changesMade = writable<boolean>(false)
+
+    const modalStore = getModalStore();
 
     onMount(() => {
         setTimeout(async () => {
@@ -55,6 +60,93 @@
                 }
             }
         })
+
+        const currentHref = window.location.href;
+
+        const onKeydown = async (event: KeyboardEvent) => {
+            if (window.location.href !== currentHref) {
+                window.removeEventListener("keydown", onKeydown)
+            }
+
+            if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault()
+                await saveChanges()
+            }
+
+            let valueInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll("#value-input")
+            let definitionInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll("#definition-input")
+
+            if (event.key === "Backspace") {
+                const valueIndex = Array.from(valueInputs).indexOf(event.target as HTMLInputElement)
+                if (valueIndex > 0 && valueInputs[valueIndex].value === "" && definitionInputs[valueIndex].value === "") {
+                    event.preventDefault()
+                    await removeCard(valueIndex)
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    definitionInputs[valueIndex - 1].focus()
+                }
+
+                const definitionIndex = Array.from(definitionInputs).indexOf(event.target as HTMLInputElement)
+                if (definitionIndex > 0 && definitionInputs[definitionIndex].value === "") {
+                    event.preventDefault()
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs[definitionIndex].focus()
+                }
+            }
+
+            if ((event.key === "Enter" || event.key === "Tab") && !event.shiftKey) {
+                event.preventDefault()
+                if (event.target === definitionInputs[definitionInputs.length - 1]) {
+                    await addCard()
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs[valueInputs.length - 1].focus()
+                }
+                if (definitionInputs.length > 0 && Array.from(definitionInputs).includes(event.target as HTMLInputElement)) {
+                    const index = Array.from(definitionInputs).indexOf(event.target as HTMLInputElement)
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs[index + 1].focus()
+                }
+                if (valueInputs.length > 0 && Array.from(valueInputs).includes(event.target as HTMLInputElement)) {
+                    const index = Array.from(valueInputs).indexOf(event.target as HTMLInputElement)
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    definitionInputs[index].focus()
+                }
+                if (event.target === document.getElementById("title-input")) {
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    if (valueInputs.length > 0) valueInputs[0].focus()
+                    else {
+                        await addCard()
+                        valueInputs = document.querySelectorAll("#value-input")
+                        definitionInputs = document.querySelectorAll("#definition-input")
+                        valueInputs[0].focus()
+                    }
+                }
+            }
+
+            if (event.key === "Tab" && event.shiftKey) {
+                event.preventDefault()
+                if (definitionInputs.length > 0 && Array.from(definitionInputs).includes(event.target as HTMLInputElement)) {
+                    const index = Array.from(definitionInputs).indexOf(event.target as HTMLInputElement)
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs[index].focus()
+                }
+                if (valueInputs.length > 0 && Array.from(valueInputs).includes(event.target as HTMLInputElement)) {
+                    const index = Array.from(valueInputs).indexOf(event.target as HTMLInputElement)
+                    valueInputs = document.querySelectorAll("#value-input")
+                    definitionInputs = document.querySelectorAll("#definition-input")
+                    if (index > 0) definitionInputs[index - 1].focus()
+                    else document.getElementById("title-input")?.focus()
+                }
+            }
+        }
+
+        document.addEventListener("keydown", onKeydown)
     })
 
     async function addCard() {
@@ -67,9 +159,18 @@
 
     async function saveChanges() {
         if ($set) {
+            for (let i = 0; i < $set.values.length; i++) {
+                if ($set.values[i] === "" && $set.definitions[i] === "") {
+                    $set.values.splice(i, 1)
+                    $set.definitions.splice(i, 1)
+                    i--
+                }
+            }
+
             await saveSet($set.set_uuid, $set.title, $set.values, $set.definitions, $set.private)
             originalSet = JSON.stringify($set)
             changesMade.set(false)
+            $set.values = $set.values.map((value) => value)
         }
     }
 
@@ -87,28 +188,53 @@
             }
         }
 
-        changesMade.set(originalSet !== JSON.stringify(set))
+        if (originalSet !== "" && JSON.parse(originalSet).private === set.private) {
+            changesMade.set(originalSet !== JSON.stringify(set))
+        }
     })
 
     async function removeCard(index: number) {
         if ($set) {
             $set.values.splice(index, 1)
             $set.definitions.splice(index, 1)
-            $set.values = $set.values
+            $set.values = $set.values.map((value) => value)
         }
     }
 
     async function togglePrivate() {
-        $set.private = !$set.private;
         await updateSetPrivacy($set.set_uuid, $set.private);
+        await saveChanges()
     }
 
     async function importSet() {
-
+        const modalComponent: ModalComponent = {ref: ImportCards};
+        const modal: ModalSettings = {
+            type: "component",
+            component: modalComponent,
+            response: ({values, definitions}) => {
+                if ($set) {
+                    $set.values = $set.values.concat(values)
+                    $set.definitions = $set.definitions.concat(definitions)
+                    $set.values = $set.values.map((value) => value)
+                }
+            }
+        };
+        modalStore.trigger(modal);
     }
 
     async function exportSet() {
-
+        const modalComponent: ModalComponent = {ref: ExportCards};
+        const modal: ModalSettings = {
+            type: "component",
+            component: modalComponent,
+            meta: {
+                values: $set?.values,
+                definitions: $set?.definitions
+            },
+            response: () => {
+            }
+        };
+        modalStore.trigger(modal);
     }
 </script>
 
@@ -137,21 +263,20 @@
                 </svg>
                 Back to Set
             </a>
-            <button class="btn mt-1" on:click={togglePrivate}>
-                {#if $set.private}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M4 4a4 4 0 0 1 8 0v2h.25c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 12.25 15h-8.5A1.75 1.75 0 0 1 2 13.25v-5.5C2 6.784 2.784 6 3.75 6H4Zm8.25 3.5h-8.5a.25.25 0 0 0-.25.25v5.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25ZM10.5 6V4a2.5 2.5 0 1 0-5 0v2Z"></path></svg>
-                {:else}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM5.78 8.75a9.64 9.64 0 0 0 1.363 4.177c.255.426.542.832.857 1.215.245-.296.551-.705.857-1.215A9.64 9.64 0 0 0 10.22 8.75Zm4.44-1.5a9.64 9.64 0 0 0-1.363-4.177c-.307-.51-.612-.919-.857-1.215a9.927 9.927 0 0 0-.857 1.215A9.64 9.64 0 0 0 5.78 7.25Zm-5.944 1.5H1.543a6.507 6.507 0 0 0 4.666 5.5c-.123-.181-.24-.365-.352-.552-.715-1.192-1.437-2.874-1.581-4.948Zm-2.733-1.5h2.733c.144-2.074.866-3.756 1.58-4.948.12-.197.237-.381.353-.552a6.507 6.507 0 0 0-4.666 5.5Zm10.181 1.5c-.144 2.074-.866 3.756-1.58 4.948-.12.197-.237.381-.353.552a6.507 6.507 0 0 0 4.666-5.5Zm2.733-1.5a6.507 6.507 0 0 0-4.666-5.5c.123.181.24.365.353.552.714 1.192 1.436 2.874 1.58 4.948Z"></path></svg>
-                {/if}
-            </button>
+            <RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary">
+                <RadioItem bind:group={$set.private} name="justify" value={false} on:click={togglePrivate}>Public
+                </RadioItem>
+                <RadioItem bind:group={$set.private} name="justify" value={true} on:click={togglePrivate}>Private
+                </RadioItem>
+            </RadioGroup>
         </div>
 
         <div>
             <div class="flex flex-row mb-2 ml-2">
-                <button class="mr-3" on:click={importSet}></button>
-                <button class="mr-3" on:click={exportSet}></button>
+                <button class="mr-3" on:click={importSet}>Import</button>
+                <button class="mr-3" on:click={exportSet}>Export</button>
             </div>
-            <input class="text-4xl input" bind:value={$set.title}>
+            <input id="title-input" class="text-4xl input" bind:value={$set.title}>
         </div>
 
         <div class="h-14"></div>
@@ -161,7 +286,8 @@
                 <div class="flex flex-row justify-between items-center">
                     <p class="p-5">{index + 1}</p>
                     <div class="p-3">
-                        <button class="hover:bg-error-200 p-2 rounded-md btn-3d-transparent duration-200" on:click={() => removeCard(index)}>
+                        <button class="hover:bg-error-200 p-2 rounded-md btn-3d-transparent duration-200"
+                                on:click={() => removeCard(index)}>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
                                 <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"></path>
                             </svg>
@@ -171,10 +297,11 @@
                 <hr class="bg-surface-400 h-[2px]">
                 <div class="p-5 grid grid-cols-2">
                     <div class="pr-2">
-                        <input class="input" bind:value={value} placeholder="value">
+                        <input id="value-input" class="input" bind:value={value} placeholder="value">
                     </div>
                     <div class="pl-2">
-                        <input class="input" bind:value={$set.definitions[$set.values.indexOf(value)]} placeholder="definition">
+                        <input id="definition-input" class="input"
+                               bind:value={$set.definitions[$set.values.indexOf(value)]} placeholder="definition">
                     </div>
                 </div>
             </div>

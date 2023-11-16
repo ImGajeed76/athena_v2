@@ -83,10 +83,6 @@
         }
     })
 
-    sortedCards.subscribe((cards) => {
-        console.log(cards)
-    })
-
     async function deleteThisSet() {
         const modal: ModalSettings = {
             type: 'prompt',
