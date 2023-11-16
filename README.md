@@ -56,7 +56,7 @@ We're excited to see your contributions and are happy to guide you through the p
 
 ## Community and Support
 
-Join our growing community and be a part of the Athena Learning journey! While we are in the process of setting up a Discord server for more interactive discussions, you can currently reach us via email for support and inquiries at support@athena-learning.ch.
+Join our growing community and be a part of the Athena Learning journey! Engage in lively discussions, get support, and collaborate with others on our [Discord server](https://discord.gg/vNb4suv6Xt). For additional support and inquiries, feel free to reach out to us via email at support@athena-learning.ch.
 
 ## License
 
