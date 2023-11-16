@@ -157,6 +157,9 @@
                         </div>
                     </div>
                     <div class="flex flex-row">
+                        <a href="https://ko-fi.com/athena_learning" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 pr-2 duration-200">
+                            <img class="h-8" alt="ko-fi" src="https://storage.ko-fi.com/cdn/brandasset/kofi_s_logo_nolabel.png">
+                        </a>
                         <a href="/discord" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">
                             <img alt="discord" class="w-5 h-5 " src="/discord-mark-black.svg"/>
                         </a>
