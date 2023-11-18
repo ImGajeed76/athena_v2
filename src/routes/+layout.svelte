@@ -31,7 +31,8 @@
         "/discord",
         "/login",
         "/signup",
-        "/auth",
+        "/auth/forgot-password",
+        "/auth/reset-password",
         "/ee",
         "/"
     ]
