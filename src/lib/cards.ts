@@ -235,7 +235,7 @@ export class Trainer {
         }
 
         if (this.settings.case_sensitive && answer === right_answer) correct = true;
-        else if (!this.settings.case_sensitive && answer.toLowerCase() === right_answer.toLowerCase()) correct = true;
+        if (!this.settings.case_sensitive && answer.toLowerCase() === right_answer.toLowerCase()) correct = true;
 
         if (this.settings.allow_partial_answers && !this.settings.case_sensitive) {
             if (right_answer.split(",").includes(answer)) correct = true;
@@ -330,8 +330,8 @@ export function importCards(text: string, card_separator: string = ",", pair_sep
 
 export function exportCards(cards: Card[], card_separator: string = ",", pair_separator: string = "\n") {
     for (const card of cards) {
-        card.value = card.value.replace(card_separator, " ");
-        card.definition = card.definition.replace(card_separator, " ");
+        card.value = card.value.replaceAll(card_separator, " ");
+        card.definition = card.definition.replaceAll(card_separator, " ");
     }
 
     return cards.map(card => `${card.value}${card_separator}${card.definition}`).join(pair_separator);

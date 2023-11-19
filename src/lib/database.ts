@@ -28,7 +28,10 @@ let currentUserData: null | {
 
 export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
-if (PUBLIC_IN_PROD === "true") supabase.auth.refreshSession().then(onMount);
+if (PUBLIC_IN_PROD === "true") supabase.auth.refreshSession().then(onMount).catch(error => {
+    console.error(error);
+    onMount();
+});
 else onMount();
 
 function onMount() {
