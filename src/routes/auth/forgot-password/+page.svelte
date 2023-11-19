@@ -50,7 +50,7 @@
 </script>
 
 <div class="w-full h-full grid items-center">
-    <div class="max-w-2xl w-full m-auto h-fit shadow-stance p-5">
+    <div class="max-w-2xl w-full m-auto h-fit shadow-stance p-5 rounded-md">
         <h2 class="h3">Reset Password</h2>
         <p class="mb-5">Forgot your password? No problem, we got you!</p>
 
