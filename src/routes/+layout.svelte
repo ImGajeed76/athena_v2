@@ -136,7 +136,7 @@
 </Drawer>
 
 
-<Modal/>
+<Modal buttonPositive="outline-0 variant-ghost-primary text-black focus:variant-filled-primary hover:variant-filled-primary" buttonNeutral="duration-200 variant-ghost-surface hover:variant-ghost-error"/>
 <Toast/>
 
 <div class="h-screen w-screen">
