@@ -60,6 +60,8 @@
                     if (value) resolve("");
                 })
             })
+        } else {
+            $verified = true;
         }
 
         if (!$verified) {
