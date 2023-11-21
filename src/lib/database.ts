@@ -3,6 +3,7 @@ import {createClient} from "@supabase/supabase-js";
 import {PUBLIC_IN_PROD, PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL} from "$env/static/public";
 import {get, writable} from "svelte/store";
 import {decode} from 'base64-arraybuffer';
+import {loadPermissions} from "$lib/permissions";
 
 export const loggedIn = writable(false);
 export const currentUser = writable<null | {
@@ -236,6 +237,8 @@ async function updateCurrentUser() {
         user.avatar_url = avatar;
         return user;
     })
+
+    await loadPermissions();
 }
 
 let usernameCash: Record<string, string> = {};

@@ -1,5 +1,4 @@
 <script>
-    import {currentUser} from "$lib/database";
     import UserSearch from "../../modules/other/UserSearch.svelte";
 </script>
 
