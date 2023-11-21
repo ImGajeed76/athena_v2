@@ -1,6 +1,7 @@
 import {get} from "svelte/store";
 import {currentUser, loggedIn, supabase} from "$lib/database";
 import {shortUUID} from "$lib/helpers";
+import {permissions, permissions_loaded} from "$lib/permissions";
 
 const CARD_LEARNED = 2;
 
@@ -753,4 +754,89 @@ export async function updateSetPrivacy(set_uuid: string, private_set: boolean) {
     }
 
     return set_uuid;
+}
+
+export async function saveCardsForSuggestions(values: string[], definitions: string[]) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    if (!get(permissions_loaded)) {
+        console.log("Permissions not loaded")
+        return "";
+    }
+
+    if (!get(permissions).allow_card_saving) {
+        console.log("Card saving not allowed")
+        return "";
+    }
+
+    const words: {
+        value: string,
+        suggestions: string[]
+    }[] = [];
+
+
+    for (let value_index = 0; value_index < values.length; value_index++) {
+        const index = words.findIndex(word => word.value === values[value_index]);
+        if (index === -1) {
+            words.push({
+                value: values[value_index],
+                suggestions: [definitions[value_index]]
+            })
+        } else {
+            words[index].suggestions.push(definitions[value_index]);
+        }
+    }
+
+    for (let definition_index = 0; definition_index < definitions.length; definition_index++) {
+        const index = words.findIndex(word => word.value === definitions[definition_index]);
+        if (index === -1) {
+            words.push({
+                value: definitions[definition_index],
+                suggestions: [values[definition_index]]
+            })
+        } else {
+            words[index].suggestions.push(values[definition_index]);
+        }
+    }
+
+
+    for (const word of words) {
+        const {value, suggestions} = word;
+
+        // Check if the value already exists
+        const {data, error} = await supabase
+            .from('cards_suggestions')
+            .select('suggestions')
+            .eq('value', value)
+            .single();
+
+        if (error && error.code !== "PGRST116") {
+            console.error('Error fetching data:', error);
+            continue;
+        } else if (error) {
+            // create new row if it doesn't exist
+            await supabase
+                .from('cards_suggestions')
+                .insert({value, suggestions});
+
+            continue;
+        }
+
+        if (data) {
+            // If value exists, merge suggestions arrays and update
+            const mergedSuggestions = [...new Set([...data.suggestions, ...suggestions])];
+            await supabase
+                .from('cards_suggestions')
+                .update({suggestions: mergedSuggestions})
+                .eq('value', value);
+        } else {
+            // If value does not exist, insert new row
+            await supabase
+                .from('cards_suggestions')
+                .insert([{value, suggestions}]);
+        }
+    }
 }

@@ -3,12 +3,13 @@
     import {writable} from "svelte/store";
     import type {Trainer} from "$lib/cards";
     import {onMount} from "svelte";
-    import {Card, deleteSet, getSet, updateSetPrivacy} from "$lib/cards";
+    import {Card, deleteSet, getSet, saveCardsForSuggestions, updateSetPrivacy} from "$lib/cards";
     import {page} from "$app/stores";
     import {getUsername, loggedIn, currentUser} from "$lib/database";
     import {getModalStore, ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
     import type {ModalSettings} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
+    import {permissions_loaded} from "$lib/permissions";
 
     const modalStore = getModalStore();
 
@@ -34,6 +35,7 @@
                 if (new_set.data) {
                     set.set(new_set.data)
                     loading.set(false)
+                    await saveCardsForSuggestions($set.values, $set.definitions);
                 }
                 if (new_set.error && new_set.error.code === "PGRST116") {
                     await goto("/cards")
@@ -47,10 +49,17 @@
                 if (new_set.data) {
                     set.set(new_set.data)
                     loading.set(false)
+                    await saveCardsForSuggestions($set.values, $set.definitions);
                 }
                 if (new_set.error && new_set.error.code === "PGRST116") {
                     await goto("/cards")
                 }
+            }
+        })
+
+        permissions_loaded.subscribe(async () => {
+            if ($set) {
+                await saveCardsForSuggestions($set.values, $set.definitions);
             }
         })
     })

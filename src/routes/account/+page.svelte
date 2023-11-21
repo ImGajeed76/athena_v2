@@ -1,12 +1,13 @@
 <script lang="ts">
     import type {ModalComponent} from "@skeletonlabs/skeleton";
-    import {Avatar, getModalStore, TableOfContents, tocCrawler} from '@skeletonlabs/skeleton';
+    import {Avatar, getModalStore, SlideToggle, TableOfContents, tocCrawler} from '@skeletonlabs/skeleton';
     import {clearCash, currentUser, supabase, updateUsername} from "$lib/database";
     import {writable} from "svelte/store";
     import CodeModalSix from "../../modules/modals/CodeModalSix.svelte";
     import PasswordCheck from "../../modules/auth/PasswordCheck.svelte";
     import Enable2FA from "../../modules/auth/Enable2FA.svelte";
     import Disable2FA from "../../modules/auth/Disable2FA.svelte";
+    import {permissions, savePermissions} from "$lib/permissions";
 
     const modalStore = getModalStore();
 
@@ -175,7 +176,8 @@
                         <div class="relative w-52 h-52">
                             <Avatar width="w-52 md:mr-3" initials="{$currentUser?.short_username || 'AB'}"
                                     src="{$currentUser?.avatar_url || ''}"></Avatar>
-                            <a href="/account/change-avatar" class="btn variant-ghost btn-sm flex items-center bottom-0 left-0 absolute bg-surface-200 mb-5 hover:shadow-stance">
+                            <a href="/account/change-avatar"
+                               class="btn variant-ghost btn-sm flex items-center bottom-0 left-0 absolute bg-surface-200 mb-5 hover:shadow-stance">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"
                                      class="mr-1">
                                     <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354Z"></path>
@@ -186,7 +188,7 @@
                     </div>
                 </div>
 
-                <h2 class="h2" id="authentication">Password and authentication</h2>
+                <h2 class="h2 mt-10" id="authentication">Password and authentication</h2>
                 <hr class="w-full h-[2px] lg:my-4 bg-gray-300 border-0">
 
                 <div class="w-96 lg:p-5 pb-0.5 pt-5 flex flex-col">
@@ -205,6 +207,20 @@
                             <Disable2FA/>
                         {/if}
                     {/if}
+                </div>
+
+                <h2 class="h2 mt-10" id="danger-zone">Permissions</h2>
+                <hr class="w-full h-[2px] lg:my-4 bg-gray-300 border-0">
+
+                <div class="h-5"></div>
+
+                <div class="mb-7">
+                    <div class="flex flex-row items-center justify-between">
+                        <p class="text-xl">Allow card saving</p>
+                        <SlideToggle name="one-option" bind:checked={$permissions.allow_card_saving}
+                                     active="bg-primary-500" size="sm" on:change={savePermissions}/>
+                    </div>
+                    <p>This is used to make suggestions when creating new cards. This data is collected anonymous.</p>
                 </div>
             </div>
         </div>

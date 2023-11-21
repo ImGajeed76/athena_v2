@@ -115,3 +115,52 @@ export async function updatePermission(permission_name: string, value: boolean):
         error: null
     }
 }
+
+
+export async function savePermissions(): Promise<{ data: any, error: null } | {
+    data: null,
+    error: any
+}> {
+    const currentUserData = get(currentUser)
+    if (!currentUserData) {
+        return {
+            data: null,
+            error: "No user data"
+        }
+    }
+
+    if (!currentUserData.email) {
+        return {
+            data: null,
+            error: "No user email"
+        }
+    }
+
+    const permissionsData: Permissions = get(permissions);
+
+    // remove show_ permissions
+    for (const key in permissionsData) {
+        if (key.startsWith("show_")) {
+            // @ts-ignore
+            delete permissionsData[key];
+        }
+    }
+
+    const {error: update_error} = await supabase
+        .from("permissions")
+        .update(permissionsData)
+        .eq("email", currentUserData.email);
+
+    if (update_error) {
+        console.error(update_error)
+        return {
+            data: null,
+            error: update_error
+        }
+    }
+
+    return {
+        data: "success",
+        error: null
+    }
+}
