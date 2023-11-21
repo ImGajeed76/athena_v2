@@ -35,7 +35,7 @@
                 if (new_set.data) {
                     set.set(new_set.data)
                     loading.set(false)
-                    await saveCardsForSuggestions($set.values, $set.definitions);
+                    await saveCardsForSuggestions($set.values, $set.definitions, $set.authors);
                 }
                 if (new_set.error && new_set.error.code === "PGRST116") {
                     await goto("/cards")
@@ -49,7 +49,7 @@
                 if (new_set.data) {
                     set.set(new_set.data)
                     loading.set(false)
-                    await saveCardsForSuggestions($set.values, $set.definitions);
+                    await saveCardsForSuggestions($set.values, $set.definitions, $set.authors);
                 }
                 if (new_set.error && new_set.error.code === "PGRST116") {
                     await goto("/cards")
@@ -59,7 +59,7 @@
 
         permissions_loaded.subscribe(async () => {
             if ($set) {
-                await saveCardsForSuggestions($set.values, $set.definitions);
+                await saveCardsForSuggestions($set.values, $set.definitions, $set.authors);
             }
         })
     })

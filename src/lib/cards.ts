@@ -756,7 +756,7 @@ export async function updateSetPrivacy(set_uuid: string, private_set: boolean) {
     return set_uuid;
 }
 
-export async function saveCardsForSuggestions(values: string[], definitions: string[]) {
+export async function saveCardsForSuggestions(values: string[], definitions: string[], authors: string[]) {
     if (!get(loggedIn)) {
         console.log("Not logged in")
         return "";
@@ -769,6 +769,17 @@ export async function saveCardsForSuggestions(values: string[], definitions: str
 
     if (!get(permissions).allow_card_saving) {
         console.log("Card saving not allowed")
+        return "";
+    }
+
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return "";
+    }
+
+    if (!authors.includes(currentEmail)) {
+        console.log("Not an author")
         return "";
     }
 
