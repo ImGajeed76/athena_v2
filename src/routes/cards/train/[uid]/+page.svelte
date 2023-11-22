@@ -44,8 +44,10 @@
             if (mounted && window && document) {
                 const input_element = document.getElementById("text-input-field") as HTMLInputElement;
                 if (!input_element) return;
-                input_element.focus();
-                input_element.select();
+                setTimeout(() => {
+                    input_element.focus();
+                    input_element.selectionStart = input_element.selectionEnd = input_element.value.length;
+                }, 50)
             }
         }, 50)
     })
@@ -369,6 +371,16 @@
     function escape() {
         goto("/cards/" + $set.set_uuid);
     }
+
+    function writeChar(char: string) {
+        input_value.set($input_value + char);
+        const input_element = document.getElementById("text-input-field") as HTMLInputElement;
+        if (!input_element) return;
+        setTimeout(() => {
+            input_element.focus();
+            input_element.selectionStart = input_element.selectionEnd = input_element.value.length;
+        }, 50)
+    }
 </script>
 
 <style>
@@ -442,6 +454,13 @@
                             {:else}
                                 <div class="w-full absolute bottom-0 mb-7">
                                     <form>
+                                        <div class="flex flex-row items-center">
+                                            {#each $set.trainer.getSpecialChars() as char}
+                                                <button class="btn variant-ghost-secondary btn-sm mr-2 mb-2" on:click={() => {writeChar(char)}}>
+                                                    {char}
+                                                </button>
+                                            {/each}
+                                        </div>
                                         <input id="text-input-field" type="text" class="input" placeholder="Your Answer"
                                                bind:value={$input_value}>
                                         <div class="w-full flex justify-end">

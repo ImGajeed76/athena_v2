@@ -62,13 +62,6 @@
     }
 
     set.subscribe((set) => {
-        const currentEmail = get(currentUser)?.email;
-        if (currentEmail) {
-            if (set && !set.authors.includes(currentEmail)) {
-                goto("/cards")
-            }
-        }
-
         changesMade.set(originalSet !== JSON.stringify(set))
     })
 </script>
@@ -108,6 +101,24 @@
         <div class="h-20"></div>
 
         <div>
+            <p class="text-3xl">General</p>
+
+            <div class="h-5"></div>
+
+            <div class="mb-7">
+                <div class="flex flex-row items-center justify-between">
+                    <p class="text-xl">Side to learn</p>
+                    <select class="select w-min" bind:value={$set.trainer.side_to_learn}>
+                        <option value="both">Both</option>
+                        <option value="values">Values</option>
+                        <option value="definitions">Definitions</option>
+                    </select>
+                </div>
+                <p>Select which side you want to learn.</p>
+            </div>
+
+            <div class="h-10"></div>
+
             <p class="text-3xl">Text Correction</p>
 
             <div class="h-5"></div>

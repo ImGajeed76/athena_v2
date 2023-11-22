@@ -1,10 +1,47 @@
 <mjml>
     <mj-head>
+        <mj-title>Athena - You have been invited!</mj-title>
         <mj-preview>
-            <!-- TODO Add mail preview -->
+            Hello there! and welcome to Athena 🎉
         </mj-preview>
     </mj-head>
     <mj-body>
-
+        <mj-section>
+            <mj-column>
+                <mj-image src="https://www.athena-learning.ch/athena_logo.png">
+                </mj-image>
+            </mj-column>
+        </mj-section>
+        <mj-section>
+            <mj-column>
+                <mj-text>
+                    <h1>Hello there!</h1>
+                    <h1>and welcome to Athena 🎉</h1>
+                </mj-text>
+                <mj-divider></mj-divider>
+                <mj-text>
+                    <h3>You have been invited to Athena!</h3>
+                    <h3>To start your journey, please confirm your account by clicking the button below.</h3>
+                </mj-text>
+                <mj-button background-color="#af2dfb" href="{{ .ConfirmationURL }}">Confirm your account</mj-button>
+                <mj-text>
+                    <h4>If this didnt work, copy and paste the following link in your browser:</h4>
+                    <p>{{ .ConfirmationURL }}</p>
+                    <h4>Have fun learning!</h4>
+                </mj-text>
+                <mj-divider></mj-divider>
+                <mj-text>
+                    <h4>Best regards,</h4>
+                    <h4>Your Athena Team</h4>
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-section>
+            <mj-column>
+                <mj-text>
+                    <h5>If you have any questions, feel free to contact us at <a href="mailto:support@athena-learning.ch">support@athena-learning.ch</a></h5>
+                </mj-text>
+            </mj-column>
+        </mj-section>
     </mj-body>
 </mjml>

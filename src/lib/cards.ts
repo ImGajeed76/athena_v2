@@ -316,6 +316,23 @@ export class Trainer {
         this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
         this.current_deck_length = 5;
     }
+
+    static extractSpecialCharacters(input: string): string[] {
+        const regex = /[^a-zA-Z0-9\s\p{P}]/gu;
+
+        return input.match(regex) || [];
+    }
+
+    getSpecialChars(): string[] {
+        const chars: string[] = [];
+
+        for (const card of this.cards) {
+            chars.push(...Trainer.extractSpecialCharacters(card.value));
+            chars.push(...Trainer.extractSpecialCharacters(card.definition));
+        }
+
+        return [...new Set(chars)];
+    }
 }
 
 export function importCards(text: string, card_separator: string = ",", pair_separator: string = "\n") {

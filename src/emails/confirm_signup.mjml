@@ -1,32 +1,46 @@
 <mjml>
     <mj-head>
+        <mj-title>Athena - Confirm your email address</mj-title>
         <mj-preview>
-            <!-- TODO Add mail preview -->
+            Welcome to Athena! Please confirm your email address.
         </mj-preview>
     </mj-head>
     <mj-body>
         <mj-section>
             <mj-column>
-                <mj-raw>
-                    <div style="padding: 10px">
-                        <div style="background: #af2dfb; border-radius: 10px; padding: 5px">
-                            <div style="display: flex; align-items: center;">
-                                <div style="flex: 1; padding-left: 5%">
-                                    <?xml version="1.0" encoding="UTF-8"?>
-                                    <svg style="height: 80px" id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 755.29 840.55">
-                                        <path fill="#fff" d="m630.83,236.88c-40.76-37.42-86.5-64.47-139.88-78.06-70-17.82-138.35-13.11-203.95,16.81-70.39,32.11-121.54,84.4-152.69,155.37-19.41,44.23-23.74,91.14-24.16,139.09-.46,53.04-19.36,99.89-57.31,137.6-11.54,11.47-26.12,19.95-39.67,29.27-2.66,1.83-7.96,2.85-10.34,1.42-5.16-3.11-2.08-8.29-.19-12.27,29.88-62.99,26.14-128.31,18.79-195.57-9.64-88.19,8.93-171.78,58.99-246.69C136.85,99.44,214.92,43.71,312.05,16.93c112.09-30.9,221.7-18.63,327.02,29.79,39.72,18.26,76.6,42.01,108.21,72.31,21.94,21.03-7.43,20.32-14.45,24.14-41.77,22.71-76.5,52.4-102,93.72Z"/>
-                                        <path fill="#fff" d="m329.51,661.6c-51.12,60.72-120.15,77.26-193.92,82.48-10.06.71-20.16.88-30.25,1.01-7.7.1-17.21,2.27-20.43-7.31-3.23-9.6,6.38-13.06,12.13-17.21,16.75-12.09,31.17-26.47,45.33-41.42,15.77-16.64,40.08-14.61,59.21-24.73,30.58-16.17,61.37-32.38,93.46-45.07,13.68-5.41,31.18-.21,46.4-2.9,29.76-5.26,49.77-23.79,56.86-53.02,7.88-32.43-1.97-59.85-30.18-80.1,111.24-57.72,222.15-115.27,333.06-172.82,2.64,2.13,5.27,4.26,7.91,6.39-74.07,121.09-44.81,250.95-34.67,385.06-18.81-15.03-33.4-26.38-47.65-38.15-17.07-14.11-11.21-34.91-10.35-51.43,5.04-96.29-84.15-112.77-148.71-88.28-6.86,2.6-13.76,5.12-20.47,7.61-8.04,36.31,38.19,92.12,77.53,90.89,28.91-.9,39.23,7.62,37.7,38.23-2.61,52.31-.15,104.87.04,157.32.13,35.34-2.56,37.68-36.06,26.33-88.34-29.94-157.91-81.75-195.34-170.26-.34-.81-.92-1.51-1.61-2.61Z"/>
-                                        <path fill="#fff" d="m599.9,318.2c-41.5,21.49-81.86,42.32-122.16,63.27-48.72,25.32-97.06,51.41-146.29,75.71-16.35,8.07-36.64,6.51-51.82,19.19-34.88,29.13-38.61,71.71-8.87,109.83-31.21,15.18-60.79,33.63-96.49,43.98,21.55-43.95-3.11-84.17-5.21-125.59-3.31-65.33,13.03-124.24,51.55-176.55,39.94-54.23,95.13-85.18,161.17-93.38,72.5-9,136.97,13.31,192.85,60.19,8.48,7.11,16.3,15.01,25.27,23.33Zm-189.32-37.1c-87.34.08-160.67,53.8-186.51,134.04-3.16,9.8-5.94,20.78,6.4,25.53,8.25,3.17,15.98-.58,19.25-10.47,32.82-99.26,128.72-144.22,226.26-106.46,8.64,3.35,19.12,6.41,24.22-5.28,5.11-11.71-2.01-18.3-12.41-22.22-26.05-9.84-52.65-16.8-77.2-15.14Z"/>
-                                        <path fill="#fff" d="m324.07,578.13c-21.38-.04-41.57-21.02-41.56-43.2.01-24.78,18.83-41.87,46.04-41.82,22.19.04,41.15,19.15,40.92,41.26-.26,25.28-19.48,43.81-45.41,43.76Z"/>
-                                    </svg>
-                                </div>
-                                <div style="flex: 2; text-align: right; padding-right: 5%">
-                                    <h1 style="color: #ffffff">Athena Learning</h1>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </mj-raw>
+                <mj-image src="https://www.athena-learning.ch/athena_logo.png">
+                    </mj-image>
+            </mj-column>
+        </mj-section>
+        <mj-section>
+            <mj-column>
+                <mj-text>
+                    <h1>Hello there!</h1>
+                    <h1>and welcome to Athena 🎉</h1>
+                </mj-text>
+                <mj-divider></mj-divider>
+                <mj-text>
+                    <h3>Thank you for signing up to Athena. We are very happy to have you on board!</h3>
+                    <h3>Before you can start using Athena, you need to confirm your email address by clicking on the button below.</h3>
+                </mj-text>
+                <mj-button background-color="#af2dfb" href="{{ .ConfirmationURL }}">Confirm your email</mj-button>
+                <mj-text>
+                    <h4>If this didnt work, copy and paste the following link in your browser:</h4>
+                    <p>{{ .ConfirmationURL }}</p>
+                    <h4>Have fun learning!</h4>
+                </mj-text>
+                <mj-divider></mj-divider>
+                <mj-text>
+                    <h4>Best regards,</h4>
+                    <h4>Your Athena Team</h4>
+                </mj-text>
+            </mj-column>
+        </mj-section>
+        <mj-section>
+            <mj-column>
+                <mj-text>
+                    <h5>If you have any questions, feel free to contact us at <a href="mailto:support@athena-learning.ch">support@athena-learning.ch</a></h5>
+                </mj-text>
             </mj-column>
         </mj-section>
     </mj-body>
