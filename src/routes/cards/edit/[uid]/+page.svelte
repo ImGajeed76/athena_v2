@@ -1,7 +1,7 @@
 <script lang="ts">
     import {get, writable} from "svelte/store";
     import type {Trainer} from "$lib/cards";
-    import {getSet, saveSet, updateSetPrivacy} from "$lib/cards";
+    import {getSet, getSuggestions, saveSet, updateSetPrivacy} from "$lib/cards";
     import {onMount} from "svelte";
     import {page} from "$app/stores";
     import {currentUser, getUsername, loggedIn} from "$lib/database";
@@ -73,24 +73,24 @@
                 await saveChanges()
             }
 
-            let valueInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll("#value-input")
-            let definitionInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll("#definition-input")
+            let valueInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll(".value-input")
+            let definitionInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll(".definition-input")
 
             if (event.key === "Backspace") {
                 const valueIndex = Array.from(valueInputs).indexOf(event.target as HTMLInputElement)
                 if (valueIndex > 0 && valueInputs[valueIndex].value === "" && definitionInputs[valueIndex].value === "") {
                     event.preventDefault()
                     await removeCard(valueIndex)
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     definitionInputs[valueIndex - 1].focus()
                 }
 
                 const definitionIndex = Array.from(definitionInputs).indexOf(event.target as HTMLInputElement)
                 if (definitionIndex > 0 && definitionInputs[definitionIndex].value === "") {
                     event.preventDefault()
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     valueInputs[definitionIndex].focus()
                 }
             }
@@ -99,30 +99,30 @@
                 event.preventDefault()
                 if (event.target === definitionInputs[definitionInputs.length - 1]) {
                     await addCard()
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     valueInputs[valueInputs.length - 1].focus()
                 }
                 if (definitionInputs.length > 0 && Array.from(definitionInputs).includes(event.target as HTMLInputElement)) {
                     const index = Array.from(definitionInputs).indexOf(event.target as HTMLInputElement)
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     valueInputs[index + 1].focus()
                 }
                 if (valueInputs.length > 0 && Array.from(valueInputs).includes(event.target as HTMLInputElement)) {
                     const index = Array.from(valueInputs).indexOf(event.target as HTMLInputElement)
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     definitionInputs[index].focus()
                 }
                 if (event.target === document.getElementById("title-input")) {
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     if (valueInputs.length > 0) valueInputs[0].focus()
                     else {
                         await addCard()
-                        valueInputs = document.querySelectorAll("#value-input")
-                        definitionInputs = document.querySelectorAll("#definition-input")
+                        valueInputs = document.querySelectorAll(".value-input")
+                        definitionInputs = document.querySelectorAll(".definition-input")
                         valueInputs[0].focus()
                     }
                 }
@@ -132,14 +132,14 @@
                 event.preventDefault()
                 if (definitionInputs.length > 0 && Array.from(definitionInputs).includes(event.target as HTMLInputElement)) {
                     const index = Array.from(definitionInputs).indexOf(event.target as HTMLInputElement)
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     valueInputs[index].focus()
                 }
                 if (valueInputs.length > 0 && Array.from(valueInputs).includes(event.target as HTMLInputElement)) {
                     const index = Array.from(valueInputs).indexOf(event.target as HTMLInputElement)
-                    valueInputs = document.querySelectorAll("#value-input")
-                    definitionInputs = document.querySelectorAll("#definition-input")
+                    valueInputs = document.querySelectorAll(".value-input")
+                    definitionInputs = document.querySelectorAll(".definition-input")
                     if (index > 0) definitionInputs[index - 1].focus()
                     else document.getElementById("title-input")?.focus()
                 }
@@ -147,6 +147,21 @@
         }
 
         document.addEventListener("keydown", onKeydown)
+
+        function mouseDown(event: MouseEvent) {
+            if (window.location.href !== currentHref) {
+                document.removeEventListener("mousedown", mouseDown)
+            }
+
+            const suggestionBox = document.getElementsByClassName("suggestion-box")[0]
+            const target = event.target as HTMLElement
+
+            if (suggestionBox && target && !suggestionBox.contains(target) && !target.classList.contains("definition-input")) {
+                isDefinition.set(false)
+            }
+        }
+
+        document.addEventListener("mousedown", mouseDown)
     })
 
     async function addCard() {
@@ -154,6 +169,17 @@
             $set.values.push("")
             $set.definitions.push("")
             $set.values = $set.values
+
+            // smoothly scroll to bottom
+            const page = document.getElementById("page");
+            setTimeout(() => {
+                if (page) {
+                    page.scrollTo({
+                        top: page.scrollHeight,
+                        behavior: "smooth"
+                    })
+                }
+            }, 100)
         }
     }
 
@@ -236,6 +262,58 @@
         };
         modalStore.trigger(modal);
     }
+
+    const selectedIndex = writable<number>(0)
+    const isDefinition = writable<boolean>(false)
+    const suggestions = writable<string[]>([])
+    const rawSuggestions = writable<string[]>([])
+
+    function onBlur(index: number) {
+        selectedIndex.set(index)
+        isDefinition.set(false)
+    }
+
+    function onFocus(index: number) {
+        selectedIndex.set(index)
+        isDefinition.set(true)
+    }
+
+    set.subscribe(updateSuggestions)
+    isDefinition.subscribe(fetchSuggestions)
+    selectedIndex.subscribe(fetchSuggestions)
+    rawSuggestions.subscribe(updateSuggestions)
+
+    async function fetchSuggestions() {
+        if ($set) {
+            const value = $set.values[$selectedIndex];
+            let fetchedSuggestions = await getSuggestions(value);
+            rawSuggestions.set(fetchedSuggestions)
+        }
+    }
+
+    async function updateSuggestions() {
+        if ($set) {
+            let fetchedSuggestions = $rawSuggestions;
+            const definition = $set.definitions[$selectedIndex];
+            if (definition !== undefined) {
+                fetchedSuggestions = fetchedSuggestions.filter((suggestion) => {
+                    return suggestion.toLowerCase().includes(definition.toLowerCase())
+                })
+                suggestions.set(fetchedSuggestions)
+            }
+        }
+    }
+
+    function selectSuggestion(suggestion: string) {
+        console.log(suggestion)
+        if ($set) {
+            if ($isDefinition && $selectedIndex < $set.definitions.length) {
+                $set.definitions[$selectedIndex] = suggestion
+                $set.values = $set.values.map((value) => value)
+                isDefinition.set(false)
+            }
+        }
+    }
 </script>
 
 {#if $loading}
@@ -243,8 +321,8 @@
         <ProgressRadial size="large"/>
     </div>
 {:else if $set}
-    <div class="absolute w-full bottom-0">
-        <div class="mx-auto max-w-2xl w-full h-fit z-10 rounded-md">
+    <div class="absolute w-full bottom-0 z-50">
+        <div class="mx-auto max-w-2xl w-full h-fit rounded-md">
             <div class="shadow-2xl ease-in-out transition-all {!$changesMade ? 'opacity-0 invisible mb-0' : 'opacity-100 mb-10'} bg-white py-2 px-5 rounded-md flex flex-row items-center justify-between">
                 <p class="text-lg">Don't forget to save your changes!</p>
                 <button class="btn variant-ghost-error hover:variant-filled-error"
@@ -297,11 +375,24 @@
                 <hr class="bg-surface-400 h-[2px]">
                 <div class="p-5 grid grid-cols-2">
                     <div class="pr-2">
-                        <input id="value-input" class="input" bind:value={value} placeholder="value">
+                        <input class="value-input input" bind:value={value} placeholder="value"
+                               on:focus={() => onBlur(index)}>
                     </div>
-                    <div class="pl-2">
-                        <input id="definition-input" class="input"
+                    <div class="pl-2 relative z-0">
+                        <input class="definition-input input" on:focus={() => onFocus(index)}
                                bind:value={$set.definitions[$set.values.indexOf(value)]} placeholder="definition">
+                        {#if $isDefinition && $selectedIndex === index && $suggestions.length > 0}
+                            <div class="suggestion-box absolute top-10 left-1 p-3 w-full z-20">
+                                <div class="w-full h-full outline outline-1 bg-white outline-surface-500 p-3 rounded-md shadow-2xl">
+                                    {#each $suggestions as suggestion}
+                                        <button class="btn w-full flex justify-start hover:variant-ghost-primary"
+                                                on:click={() => selectSuggestion(suggestion)}>
+                                            {suggestion}
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
                     </div>
                 </div>
             </div>

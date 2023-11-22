@@ -868,3 +868,36 @@ export async function saveCardsForSuggestions(values: string[], definitions: str
         }
     }
 }
+
+export async function getSuggestions(value: string): Promise<string[]> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return [];
+    }
+
+    if (value.length < 2) return [];
+
+    const {data, error} = await supabase
+        .from('cards_suggestions')
+        .select('suggestions')
+        .ilike('value', `%${value}%`)
+        .limit(5);
+
+    if (error) {
+        console.error('Error fetching data:', error);
+        return [];
+    }
+
+    if (!data) {
+        console.error('No data');
+        return [];
+    }
+
+    const suggestions: string[] = [];
+
+    for (const row of data) {
+        suggestions.push(...row.suggestions);
+    }
+
+    return [...new Set(suggestions)].filter(suggestion => suggestion !== "");
+}
