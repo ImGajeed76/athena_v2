@@ -39,7 +39,7 @@
     })
 
     async function createNew() {
-        await goto("/cards/" + await createNewSet());
+        await goto("/cards/edit/" + await createNewSet());
     }
 </script>
 

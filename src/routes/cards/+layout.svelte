@@ -25,8 +25,10 @@
 
         modalStore.trigger({
             type: "confirm",
-            title: "Allow cards to be saved.",
-            body: "Are we allowed to save your cards for making suggestions for other user? This data will be collected anonymous.",
+            title: "Enhance Your Card Creation! ✨",
+            body: "<p class=''>\n" +
+                "        Are we allowed to store your card data <span class=\"italic\">(anonymously)</span> to offer you <span class=\"font-medium text-green-600\">smarter suggestions</span> for future cards? This helps in creating better cards <span class=\"font-medium\">faster and easier</span>, while fully respecting your privacy.\n" +
+                "    </p>",
             buttonTextConfirm: "Allow",
             buttonTextCancel: "Deny",
             response: (r) => {

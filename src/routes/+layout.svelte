@@ -140,7 +140,7 @@
 <Toast/>
 
 <div class="h-screen w-screen">
-    <AppShell>
+    <AppShell regionPage="scroll-smooth">
         <svelte:fragment slot="header">
             <div id="bar" class="sticky grid w-full items-center h-16 px-5 overflow-hidden shadow-xl">
                 <div class="w-full max-w-6xl mx-auto flex justify-between items-center">
@@ -158,10 +158,10 @@
                         </div>
                     </div>
                     <div class="flex flex-row">
-                        <a href="https://ko-fi.com/athena_learning" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 pr-2 duration-200">
+                        <a href="https://ko-fi.com/athena_learning" target="_blank" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 pr-2 duration-200">
                             <img class="h-8" alt="ko-fi" src="https://storage.ko-fi.com/cdn/brandasset/kofi_s_logo_nolabel.png">
                         </a>
-                        <a href="/discord" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">
+                        <a href="https://discord.gg/vNb4suv6Xt" target="_blank" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">
                             <img alt="discord" class="w-5 h-5 " src="/discord-mark-black.svg"/>
                         </a>
                         <a href="https://github.com/ImGajeed76/athena_v2" target="_blank" class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">

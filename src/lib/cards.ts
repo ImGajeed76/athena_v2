@@ -809,11 +809,13 @@ export async function saveCardsForSuggestions(values: string[], definitions: str
     for (let value_index = 0; value_index < values.length; value_index++) {
         const index = words.findIndex(word => word.value === values[value_index]);
         if (index === -1) {
+            if (values[value_index] === "") continue;
             words.push({
                 value: values[value_index],
-                suggestions: [definitions[value_index]]
+                suggestions: definitions[value_index] === "" ? [] : [definitions[value_index]]
             })
         } else {
+            if (definitions[value_index] === "") continue;
             words[index].suggestions.push(definitions[value_index]);
         }
     }

@@ -43,7 +43,7 @@
 </script>
 
 <div class="w-screen absolute top-0 left-0">
-    <div class="w-full max-w-6xl m-auto">
+    <div class="w-full max-w-6xl m-auto px-10 xl:px-0">
         <div class="grid grid-rows-[1fr_auto] items-center w-full h-screen">
             <div class="grid grid-cols-2 items-center h-full">
                 <div class="mt-10">
@@ -62,7 +62,7 @@
     </div>
 
     <div class="w-full bg-primary-500">
-        <div class="w-full max-w-6xl m-auto h-screen grid items-center grid-cols-2">
+        <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 grid-cols-2">
             <div class="mr-32 h-full grid items-center text-white">
                 <div class="p-5">
                     {#if $athenaArgument === 0}
@@ -138,20 +138,20 @@
     </div>
 
     <div class="w-full">
-        <div class="w-full max-w-6xl m-auto h-screen grid items-center grid-cols-2">
+        <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 grid-cols-2">
             <div>
                 <h1 class="text-6xl font-bold">Join our</h1>
                 <h1 class="text-6xl font-bold">community!</h1>
             </div>
             <div class="w-full flex justify-center">
                 <div class="flex flex-col justify-around">
-                    <a href="https://discord.gg/EnHvQYtsUz" class="w-80 h-20 hover:scale-105 duration-200 bg-[#5865F2] p-4 rounded-md mb-5">
+                    <a href="https://discord.gg/EnHvQYtsUz" target="_blank" class="w-80 h-20 hover:scale-105 duration-200 bg-[#5865F2] p-4 rounded-md mb-5">
                         <img alt="discord_logo" class="w-full h-[90%] object-contain" src="/discord-logo-white.svg"/>
                     </a>
-                    <a href="https://ko-fi.com/athena_learning" class="w-80 h-20 hover:scale-105 duration-200 bg-[#434b57] p-4 rounded-md mb-5">
+                    <a href="https://ko-fi.com/athena_learning" target="_blank" class="w-80 h-20 hover:scale-105 duration-200 bg-[#434b57] p-4 rounded-md mb-5">
                         <img alt="discord_logo" class="w-full h-[90%] object-contain" src="/kofi-logo.png"/>
                     </a>
-                    <a href="https://github.com/ImGajeed76/athena_v2" class="w-80 h-20 hover:scale-105 duration-200 bg-[#171515] p-4 rounded-md mb-5">
+                    <a href="https://github.com/ImGajeed76/athena_v2" target="_blank" class="w-80 h-20 hover:scale-105 duration-200 bg-[#171515] p-4 rounded-md mb-5">
                         <img alt="discord_logo" class="w-full h-[90%] object-contain" src="/GitHub_Logo_White.png"/>
                     </a>
                 </div>

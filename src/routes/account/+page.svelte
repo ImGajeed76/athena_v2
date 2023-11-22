@@ -145,7 +145,7 @@
     </div>
 
     <div class="w-full h-full grid lg:grid-cols-[auto_1fr]">
-        <div class="w-full h-full lg:pl-5 lg:pb-5 scale-90 lg:scale-100">
+        <div class="w-full h-fit lg:pl-5 lg:pb-5 scale-90 lg:scale-100 lg:fixed">
             <div class="xl:w-96 lg:w-72 lg:mx-5 w-full h-full shadow-stance rounded-md p-5">
                 <TableOfContents>
                     <div class="flex items-center h-10">
@@ -155,6 +155,9 @@
                     </div>
                 </TableOfContents>
             </div>
+        </div>
+        <div class="w-full h-fit lg:pl-5 lg:pb-5 scale-90 lg:scale-100">
+            <div class="xl:w-96 lg:w-72 lg:mx-5 w-full h-full"></div>
         </div>
         <div class="w-full h-full max-w-5xl pb-10 lg:pr-10 lg:pt-5 lg:m-auto"
              use:tocCrawler={{ mode: 'generate' }}>
@@ -216,11 +219,13 @@
 
                 <div class="mb-7">
                     <div class="flex flex-row items-center justify-between">
-                        <p class="text-xl">Allow card saving</p>
+                        <p class="text-xl">Improve Suggestions</p>
                         <SlideToggle name="one-option" bind:checked={$permissions.allow_card_saving}
                                      active="bg-primary-500" size="sm" on:change={savePermissions}/>
                     </div>
-                    <p>This is used to make suggestions when creating new cards. This data is collected anonymous.</p>
+                    <p class="max-w-[80%]">Turn this on to help us refine our suggestions for everyone. Your card
+                        details will be used anonymously to improve the quality of card suggestions. Your contribution
+                        is valuable and privacy is always respected.</p>
                 </div>
             </div>
         </div>

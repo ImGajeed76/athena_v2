@@ -464,7 +464,7 @@
                                         <input id="text-input-field" type="text" class="input" placeholder="Your Answer"
                                                bind:value={$input_value}>
                                         <div class="w-full flex justify-end">
-                                            <button type="submit" class="btn variant-filled-primary mt-2">Submit
+                                            <button class="btn variant-filled-primary mt-2" on:click={submitAnswer}>Submit
                                             </button>
                                         </div>
                                     </form>
