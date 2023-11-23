@@ -1,10 +1,10 @@
 <script lang="ts">
     import type {NextCardReturn, UpdateCardReturn} from "$lib/cards";
-    import {Card, getSet, saveProgress, Side, Trainer} from "$lib/cards";
+    import {Card, getSet, saveProgress, Side, temporaryTrainers, Trainer} from "$lib/cards";
     import {writable} from "svelte/store";
     import {onMount} from "svelte";
     import {page} from "$app/stores";
-    import {ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
+    import {getModalStore, ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
     import {loggedIn} from "$lib/database";
 
@@ -38,6 +38,8 @@
     const upperProgress1000 = writable<number>(0);
     const upperProgress = writable<number>(0);
     const updateProgress = writable<boolean>(false);
+
+    const modalStore = getModalStore();
 
     card_title.subscribe(() => {
         setTimeout(() => {
@@ -143,6 +145,21 @@
     function setMounted() {
         trainer.import($set.trainer);
 
+        if (temporaryTrainers[$set.set_uuid]) {
+            modalStore.trigger({
+                type: "confirm",
+                title: "You're not logged in!",
+                body: "You're not logged in, so your progress will not be saved. Do you want to learn anyway or would you like to log in?",
+                buttonTextConfirm: "Log in",
+                buttonTextCancel: "Learn anyway",
+                response: (r) => {
+                    if (r) {
+                        goto("/login" + "?redirect=" + encodeURIComponent("/cards/train/" + $set.set_uuid));
+                    }
+                }
+            })
+        }
+
         if (trainer.learn_percentage === 100 || trainer.cards.length === 0) {
             screen.set(Screen.End);
             return;
@@ -199,8 +216,8 @@
 
     onMount(() => {
         setTimeout(async () => {
-            if ($loggedIn && $loading) {
-                const new_set = await getSet($page.params.uid)
+            if ($loading) {
+                const new_set = await getSet($page.params.uid, true)
                 if (new_set.data) {
                     set.set(new_set.data)
                     loading.set(false)

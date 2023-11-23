@@ -33,6 +33,7 @@
         "/signup",
         "/auth/forgot-password",
         "/auth/reset-password",
+        "cards/train/*",
         "/ee",
         "/"
     ]
@@ -53,7 +54,8 @@
         page.subscribe((value) => {
             if (!$loggedIn) {
                 setTimeout(() => {
-                    if (!$loggedIn && !allowedIfNoUser.includes(value.route.id || "")) {
+                    // check if the user is logged in and if not, redirect to login page. If a url ends with /*, then child routes are allowed
+                    if (!$loggedIn && !allowedIfNoUser.some((allowed) => value.route.id?.startsWith(allowed))) {
                         goto('/login?redirect=' + encodeURIComponent(value.route.id || "/"))
                     }
                 }, 1000)

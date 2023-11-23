@@ -1,6 +1,6 @@
 <script lang="ts">
     import {get, writable} from "svelte/store";
-    import {getSet, saveProgress, saveSet, Trainer} from "$lib/cards";
+    import {getSet, saveProgress, saveSet, temporaryTrainers, Trainer} from "$lib/cards";
     import {onMount} from "svelte";
     import {currentUser, getUsername, loggedIn} from "$lib/database";
     import {page} from "$app/stores";
@@ -24,8 +24,8 @@
 
     onMount(() => {
         setTimeout(async () => {
-            if ($loggedIn && $loading) {
-                const new_set = await getSet($page.params.uid)
+            if ($loading) {
+                const new_set = await getSet($page.params.uid, true)
                 if (new_set.data) {
                     originalSet = JSON.stringify(new_set.data)
                     set.set(new_set.data)
@@ -54,6 +54,13 @@
 
     async function saveChanges() {
         if ($set) {
+            if (!$loggedIn) {
+                temporaryTrainers[$set.set_uuid] = $set.trainer;
+                originalSet = JSON.stringify($set)
+                changesMade.set(false)
+                $set.values = $set.values.map((value) => value)
+                return
+            }
             await saveProgress($set.progress_uuid, $set.trainer)
             originalSet = JSON.stringify($set)
             changesMade.set(false)

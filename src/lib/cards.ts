@@ -1,4 +1,4 @@
-import {get} from "svelte/store";
+import {get, writable} from "svelte/store";
 import {currentUser, loggedIn, supabase} from "$lib/database";
 import {shortUUID} from "$lib/helpers";
 import {permissions, permissions_loaded} from "$lib/permissions";
@@ -520,7 +520,9 @@ export async function createNewSet(title: string = "Untitled"): Promise<string> 
     return short_uuid;
 }
 
-export async function getSet(short_uuid: string): Promise<{
+export const temporaryTrainers: Record<string, Trainer> = {};
+
+export async function getSet(short_uuid: string, ignore_not_logged_in: boolean = false): Promise<{
     data: {
         set_uuid: string,
         progress_uuid: string,
@@ -533,13 +535,13 @@ export async function getSet(short_uuid: string): Promise<{
     } | null,
     error: any
 }> {
-    if (!get(loggedIn)) {
+    if (!get(loggedIn) && !ignore_not_logged_in) {
         console.log("Not logged in")
         return {data: null, error: "Not logged in"};
     }
 
     const currentEmail = get(currentUser)?.email;
-    if (!currentEmail) {
+    if (!currentEmail && !ignore_not_logged_in) {
         console.log("No email")
         return {data: null, error: "No email"};
     }
@@ -581,6 +583,21 @@ export async function getSet(short_uuid: string): Promise<{
     for (let i = 0; i < set_data.values.length; i++) {
         const card = new Card(set_data.values[i], set_data.definitions[i]);
         cards.push(card);
+    }
+
+    if (ignore_not_logged_in && !currentEmail) {
+        if (temporaryTrainers[short_uuid]) {
+            result.trainer = temporaryTrainers[short_uuid];
+            return {data: result, error: null};
+        }
+
+        result.trainer = new Trainer(cards);
+        temporaryTrainers[short_uuid] = result.trainer;
+        return {data: result, error: null};
+    }
+
+    if (temporaryTrainers[short_uuid]) {
+        delete temporaryTrainers[short_uuid];
     }
 
     const {data: progress_data, error: progress_error} = await supabase
