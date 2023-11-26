@@ -68,8 +68,8 @@
 
         modalStore.trigger({
             type: "alert",
-            title: "Account created successfully!",
-            body: "Please check your email to proceed.",
+            title: "Account created successfully! 🎉",
+            body: "<h1 class='text-lg'>Please check your <span class='font-medium'>email</span> to proceed.</h1>",
             buttonTextCancel: "Login",
             response: () => {
                 goto("/login" + $page.url.search);
@@ -79,7 +79,7 @@
 
 </script>
 
-<Modal/>
+<Modal buttonNeutral="outline-0 variant-ghost-primary text-black focus:variant-filled-primary hover:variant-filled-primary"/>
 
 <div class="w-full h-full grid lg:grid-cols-2">
     <div class="w-full p-5 grid items-center">

@@ -42,13 +42,12 @@
     }
 </script>
 
-<div class="w-screen absolute top-0 left-0">
+<div class="w-screen">
     <div class="w-full max-w-6xl m-auto px-10 xl:px-0">
         <div class="grid grid-rows-[1fr_auto] items-center w-full h-screen">
             <div class="grid grid-cols-2 items-center h-full">
                 <div class="mt-10">
-                    <h1 class="text-6xl font-bold">Welcome to</h1>
-                    <h1 class="text-6xl font-bold">Athena Learning</h1>
+                    <h1 class="text-6xl font-bold" style="letter-spacing: -1px; line-height: 4.5rem">Welcome to <br> Athena Learning</h1>
                     <p class="text-xl mt-6">Dive into our world of free, interactive tools designed to make learning
                         accessible and engaging for everyone.</p>
                     <a href="/signup" class="btn variant-filled-primary mt-10 btn-3d-primary">Create an account</a>
@@ -63,8 +62,8 @@
 
     <div class="w-full bg-primary-500">
         <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 grid-cols-2">
-            <div class="mr-32 h-full grid items-center text-white">
-                <div class="p-5">
+            <div class="mr-32 h-[26rem] grid items-center text-white">
+                <div class="p-5 h-full w-full flex flex-col justify-between">
                     {#if $athenaArgument === 0}
                         <div in:fly={{ duration: 300 }}>
                             <h3 class="text-4xl mb-4">Free and Open</h3>
@@ -123,6 +122,9 @@
                                 <path d="M15.28 5.22a.75.75 0 0 1 0 1.06L9.56 12l5.72 5.72a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215l-6.25-6.25a.75.75 0 0 1 0-1.06l6.25-6.25a.75.75 0 0 1 1.06 0Z"></path>
                             </svg>
                         </button>
+                        <div>
+                            <p>{$athenaArgument + 1} / {maxAthenaArgument + 1}</p>
+                        </div>
                         <button class="btn rounded-full hover:variant-ghost w-10 h-10 p-2 duration-200" on:click={nextArgument}>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="#fff">
                                 <path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path>
@@ -132,7 +134,7 @@
                 </div>
             </div>
             <div>
-                <h1 class="text-6xl font-bold text-white">Why Athena?</h1>
+                <h1 class="text-6xl font-bold text-white" style="letter-spacing: -1px; line-height: 4.5rem">Why Athena?</h1>
             </div>
         </div>
     </div>
@@ -140,8 +142,11 @@
     <div class="w-full">
         <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 grid-cols-2">
             <div>
-                <h1 class="text-6xl font-bold">Join our</h1>
-                <h1 class="text-6xl font-bold">community!</h1>
+                <h1 class="text-6xl font-bold" style="letter-spacing: -1px; line-height: 4.5rem">
+                    Join <br>
+                    Support <br>
+                    Contribute
+                </h1>
             </div>
             <div class="w-full flex justify-center">
                 <div class="flex flex-col justify-around">
@@ -151,7 +156,7 @@
                     <a href="https://ko-fi.com/athena_learning" target="_blank" class="w-80 h-20 hover:scale-105 duration-200 bg-[#434b57] p-4 rounded-md mb-5">
                         <img alt="discord_logo" class="w-full h-[90%] object-contain" src="/kofi-logo.png"/>
                     </a>
-                    <a href="https://github.com/ImGajeed76/athena_v2" target="_blank" class="w-80 h-20 hover:scale-105 duration-200 bg-[#171515] p-4 rounded-md mb-5">
+                    <a href="https://github.com/ImGajeed76/athena_v2" target="_blank" class="w-80 h-20 hover:scale-105 duration-200 bg-[#171515] p-4 rounded-md">
                         <img alt="discord_logo" class="w-full h-[90%] object-contain" src="/GitHub_Logo_White.png"/>
                     </a>
                 </div>

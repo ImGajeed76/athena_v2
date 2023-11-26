@@ -27,7 +27,7 @@
             type: "confirm",
             title: "Enhance Your Card Creation! ✨",
             body: "<p class=''>\n" +
-                "        Are we allowed to store your card data <span class=\"italic\">(anonymously)</span> to offer you <span class=\"font-medium text-green-600\">smarter suggestions</span> for future cards? This helps in creating better cards <span class=\"font-medium\">faster and easier</span>, while fully respecting your privacy.\n" +
+                "        Are we allowed to store your card data <span class=\"italic\">(anonymously)</span> to offer you <span class=\"font-medium\">smarter suggestions</span> for future cards? This helps in creating better cards <span class=\"font-medium\">faster and easier</span>, while fully respecting your privacy.\n" +
                 "    </p>",
             buttonTextConfirm: "Allow",
             buttonTextCancel: "Deny",

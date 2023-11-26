@@ -118,7 +118,11 @@
         if ($round !== trainer.round) {
             round.set(trainer.round);
             screen.set(Screen.Round_End);
-            saveProgress($set.progress_uuid, trainer);
+            if (temporaryTrainers[$set.set_uuid]) {
+                saveProgress($set.set_uuid, trainer);
+            } else {
+                saveProgress($set.progress_uuid, trainer);
+            }
             return;
         }
 
@@ -149,7 +153,7 @@
             modalStore.trigger({
                 type: "confirm",
                 title: "You're not logged in!",
-                body: "You're not logged in, so your progress will not be saved. Do you want to learn anyway or would you like to log in?",
+                body: "You're not logged in, so your progress will not be saved online. Do you want to learn anyway or would you like to log in?",
                 buttonTextConfirm: "Log in",
                 buttonTextCancel: "Learn anyway",
                 response: (r) => {
@@ -414,8 +418,8 @@
     <div class="fixed w-screen h-screen">
         <canvas class="confetti absolute top-0 left-0 w-screen h-screen -z-10" id="canvas"></canvas>
         <ProgressBar value={$upperProgress1000} max={1000} meter="bg-secondary-500"
-                     class="absolute -top-5 duration-200"/>
-        <div class="absolute top-0 left-0 m-5 ml-9 z-50">
+                     class="absolute top-16 duration-200"/>
+        <div class="absolute top-16 left-0 m-5 ml-9 z-50">
             <button on:click={escape}
                     class="outline rounded-full p-1 outline-1 outline-gray-300 hover:bg-secondary-500 duration-200 hover:scale-110 hover:outline-none active:scale-90">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -424,7 +428,7 @@
                 </svg>
             </button>
         </div>
-        <div class="absolute top-0 right-0 m-5 mr-9 z-50">
+        <div class="absolute top-16 right-0 m-5 mr-9 z-50">
             <button on:click={() => goto("/cards/train/settings/" + $set.set_uuid)}
                     class="outline rounded-full p-1 outline-1 hover:rotate-90 duration-200 outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -433,11 +437,11 @@
                 </svg>
             </button>
         </div>
-        <div class="w-full h-full -mt-14">
+        <div class="w-full h-full">
             {#if $screen === Screen.Start}
                 <div class="w-full h-full grid items-center">
                     <div class="w-full">
-                        <p class="text-5xl text-center text-gray-800">Ready to start learning?</p>
+                        <p class="text-5xl text-center text-gray-800">{$set.trainer.learn_percentage <= 0 ? 'Ready to start learning?' : 'Let\'s continue!'}</p>
                         <div class="m-auto w-fit mt-5">
                             <button class="btn w-44 variant-filled-primary btn-3d-primary"
                                     on:click={() => setTimeout(() => $screen = Screen.Card, 200)}>START
@@ -572,7 +576,7 @@
                     </div>
 
                     {#if !$updateResponse.error && !$updateResponse.correct}
-                        <div class="absolute bottom-0 mb-20 h-20 w-full bg-gray-100 p-5 flex justify-center">
+                        <div class="absolute bottom-0 h-20 w-full bg-gray-100 p-5 flex justify-center">
                             <div class="max-w-2xl w-full flex items-center justify-between">
                                 <p>Press any key to continue...</p>
                                 <button class="btn variant-filled-primary" on:click={nextCard}>Continue</button>
@@ -602,7 +606,7 @@
                         </div>
                     </div>
 
-                    <div class="absolute bottom-0 h-fit mb-20 w-full bg-gray-100 p-5 flex justify-center">
+                    <div class="absolute bottom-0 h-fit w-full bg-gray-100 p-5 flex justify-center">
                         <div class="max-w-2xl w-full flex items-center justify-between">
                             <p>Press any key to continue...</p>
                             <button class="btn variant-filled-primary" on:click={nextCard}>Continue</button>

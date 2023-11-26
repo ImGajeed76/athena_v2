@@ -315,6 +315,8 @@ export class Trainer {
         this.current_deck = [];
         this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
         this.current_deck_length = 5;
+        this.learn_percentage = 0;
+        this.round = 0;
     }
 
     static extractSpecialCharacters(input: string): string[] {
@@ -520,7 +522,7 @@ export async function createNewSet(title: string = "Untitled"): Promise<string> 
     return short_uuid;
 }
 
-export const temporaryTrainers: Record<string, Trainer> = {};
+export let temporaryTrainers: Record<string, Trainer> = {};
 
 export async function getSet(short_uuid: string, ignore_not_logged_in: boolean = false): Promise<{
     data: {
@@ -586,6 +588,8 @@ export async function getSet(short_uuid: string, ignore_not_logged_in: boolean =
     }
 
     if (ignore_not_logged_in && !currentEmail) {
+        loadTemporaryTrainersFromWebStorage();
+
         if (temporaryTrainers[short_uuid]) {
             result.trainer = temporaryTrainers[short_uuid];
             return {data: result, error: null};
@@ -711,6 +715,13 @@ export async function saveSet(set_uuid: string, title: string, values: string[],
 export async function saveProgress(progress_uuid: string, trainer: Trainer) {
     if (!get(loggedIn)) {
         console.log("Not logged in")
+
+        if (temporaryTrainers[progress_uuid]) {
+            temporaryTrainers[progress_uuid] = trainer;
+            saveTemporaryTrainersInWebStorage();
+            return progress_uuid;
+        }
+
         return "";
     }
 
@@ -919,4 +930,25 @@ export async function getSuggestions(value: string): Promise<string[]> {
     }
 
     return [...new Set(suggestions)].filter(suggestion => suggestion !== "");
+}
+
+export function saveTemporaryTrainersInWebStorage() {
+    console.log("Saving temporary trainers")
+    console.log(temporaryTrainers)
+    localStorage.setItem("temporaryTrainers", JSON.stringify(temporaryTrainers));
+}
+
+export function loadTemporaryTrainersFromWebStorage() {
+    const trainers = localStorage.getItem("temporaryTrainers");
+    if (!trainers) return;
+    const parsedTrainers = JSON.parse(trainers);
+    const importedTrainers: Record<string, Trainer> = {};
+
+    for (const key in parsedTrainers) {
+        const trainer = new Trainer([]);
+        trainer.import(parsedTrainers[key]);
+        importedTrainers[key] = trainer;
+    }
+
+    temporaryTrainers = importedTrainers;
 }

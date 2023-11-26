@@ -146,7 +146,7 @@
 <div class="h-screen w-screen">
     <AppShell regionPage="scroll-smooth">
         <svelte:fragment slot="header">
-            <div id="bar" class="sticky grid w-full items-center h-16 px-5 overflow-hidden shadow-xl">
+            <div id="bar" class="fixed bg-white grid w-full items-center h-16 px-5 overflow-hidden shadow-xl">
                 <div class="w-full max-w-6xl mx-auto flex justify-between items-center">
                     <div class="flex flex-row items-center">
                         <div class="flex items-center">
@@ -198,7 +198,7 @@
                 </div>
             </div>
         </svelte:fragment>
-        <div class="w-full h-full pt-5">
+        <div class="w-full h-full">
             <slot/>
         </div>
     </AppShell>
