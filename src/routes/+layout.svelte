@@ -156,7 +156,7 @@
                             <button class="py-2 pl-2 flex items-center w-full btn btn-3d-transparent duration-200 justify-start"
                                     on:click={() => {
                                         drawerStore.close();
-                                        goto('/account')
+                                        goto('/cards')
                                     }}>
                                 Cards
                             </button>
