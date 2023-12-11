@@ -82,7 +82,7 @@
         })
 
         setTimeout(() => {
-            window.location.href = $page.url.searchParams.get("redirect") || "/";
+            window.location.href = $page.url.searchParams.get("redirect") || "/home";
         }, 2000);
     }
 

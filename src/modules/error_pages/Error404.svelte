@@ -18,8 +18,8 @@ import ImportCards from "../modals/ImportCards.svelte";
         </div>
     </div>
     <div class="lg:h-full h-0 w-full p-20 flex items-center invisible lg:visible">
-        <div class="shadow-stance overflow-hidden rounded-md h-fit">
-            <img src="/404-image.png" alt="404">
+        <div class="overflow-hidden rounded-md h-fit">
+            <img src="/athena_404_image.png" alt="404">
         </div>
     </div>
 </div>
