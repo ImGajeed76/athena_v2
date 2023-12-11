@@ -40,6 +40,11 @@
         modalStore.close();
     }
 
+    function onClose(): void {
+        if ($modalStore[0].response) $modalStore[0].response(null);
+        modalStore.close();
+    }
+
     // Base Classes
     const cBase = 'card p-4 w-96 shadow-xl space-y-4';
     const cHeader = 'text-2xl font-bold';
@@ -67,7 +72,7 @@
 
         <!-- prettier-ignore -->
         <footer class="modal-footer {parent.regionFooter}">
-            <button class="btn {parent.buttonNeutral}" on:click={parent.onClose}>{parent.buttonTextCancel}</button>
+            <button class="btn {parent.buttonNeutral}" on:click={onClose}>{parent.buttonTextCancel}</button>
             <button id="submit"
                     class="btn {parent.buttonPositive}"
                     on:click={onFormSubmit}>Copy

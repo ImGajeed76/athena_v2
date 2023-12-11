@@ -238,6 +238,8 @@
             type: "component",
             component: modalComponent,
             response: ({values, definitions}) => {
+                if (values === undefined || definitions === undefined) return;
+
                 if ($set) {
                     $set.values = $set.values.concat(values)
                     $set.definitions = $set.definitions.concat(definitions)
@@ -249,13 +251,17 @@
     }
 
     async function exportSet() {
+        if (!$set) return;
+        if (!$set.values) return;
+        if (!$set.definitions) return;
+
         const modalComponent: ModalComponent = {ref: ExportCards};
         const modal: ModalSettings = {
             type: "component",
             component: modalComponent,
             meta: {
-                values: $set?.values,
-                definitions: $set?.definitions
+                values: $set.values,
+                definitions: $set.definitions
             },
             response: () => {
             }
@@ -324,7 +330,7 @@
     <div class="w-full h-full pt-16">
         <div class="absolute w-full bottom-0 z-50">
             <div class="mx-auto max-w-2xl w-full h-fit rounded-md">
-                <div class="shadow-2xl ease-in-out transition-all {!$changesMade ? 'opacity-0 invisible mb-0' : 'opacity-100 mb-10'} bg-white py-2 px-5 rounded-md flex flex-row items-center justify-between">
+                <div class="shadow-2xl ease-in-out transition-all {!$changesMade ? 'opacity-0 invisible lg:mb-0 -mb-10' : 'opacity-100 lg:mb-10 mb-0'} bg-white py-2 px-5 rounded-md flex flex-row items-center justify-between">
                     <p class="text-lg">Don't forget to save your changes!</p>
                     <button class="btn variant-ghost-error hover:variant-filled-error"
                             on:click={saveChanges}>

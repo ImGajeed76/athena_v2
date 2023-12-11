@@ -48,6 +48,16 @@
         })
     }
 
+    function openMenuDrawer() {
+        drawerStore.open({
+            id: 'menu',
+            bgDrawer: 'bg-surface-50 text-black',
+            width: 'w-[250px] md:w-[350px]',
+            rounded: 'rounded-l-xl',
+            position: 'left',
+        })
+    }
+
     onMount(() => {
         updateGithubStarCount();
 
@@ -132,6 +142,62 @@
                     </button>
                 </div>
             </div>
+        {:else if $drawerStore.id === 'menu'}
+            <div class="p-5 h-full grid grid-rows-[1fr_auto]">
+                <div>
+                    <ul class="list">
+                        <li>
+                            <div class="flex items-center mb-2">
+                                <img src="/athenas_helmet_black.svg" alt="Helmet" class="h-8">
+                                <a href="/" class="h3 p-2">Athena</a>
+                            </div>
+                        </li>
+                        <li>
+                            <button class="py-2 pl-2 flex items-center w-full btn btn-3d-transparent duration-200 justify-start"
+                                    on:click={() => {
+                                        drawerStore.close();
+                                        goto('/account')
+                                    }}>
+                                Cards
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="pb-5">
+                    <ul class="list">
+                        <li>
+                            <a href="https://ko-fi.com/athena_learning" target="_blank" class="grid grid-cols-2 w-full items-center pl-2 hover:bg-gray-100">
+                                <p class="w-full">Ko-Fi</p>
+                                <div class="items-center flex flex-row rounded-md h-10 justify-center w-full">
+                                    <img class="h-8" alt="ko-fi"
+                                         src="https://storage.ko-fi.com/cdn/brandasset/kofi_s_logo_nolabel.png">
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://discord.gg/vNb4suv6Xt" target="_blank" class="grid grid-cols-2 w-full items-center pl-2 hover:bg-gray-100">
+                                <p class="w-full">Discord</p>
+                                <div class="items-center flex flex-row rounded-md h-10 justify-center w-full">
+                                    <img alt="discord" class="w-5 h-5 " src="/discord-mark-black.svg"/>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/ImGajeed76/athena_v2" target="_blank"
+                               class="grid grid-cols-2 w-full items-center hover:bg-gray-100 pl-2">
+                                <p class="w-full">GitHub</p>
+                                <div class="items-center flex flex-row rounded-md h-10 justify-center w-full pl-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"
+                                         class="">
+                                        <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
+                                    </svg>
+                                    <p class="ml-2">{formatStars($github_star_count)}</p>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         {:else}
             <p>Error: Invalid Drawer ID</p>
         {/if}
@@ -149,26 +215,33 @@
             <div id="bar" class="fixed bg-white grid w-full items-center h-16 px-5 overflow-hidden shadow-xl">
                 <div class="w-full max-w-6xl mx-auto flex justify-between items-center">
                     <div class="flex flex-row items-center">
+                        <div class="flex items-center lg:invisible">
+                            <button class="mr-5" on:click={openMenuDrawer}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+                                    <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"></path>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="flex items-center">
                             <img src="/athenas_helmet_black.svg" alt="Helmet" class="h-8">
                             <a href="/" class="h3 p-2">Athena</a>
                         </div>
-                        <div class="mt-2 ml-5">
+                        <div class="mt-2 ml-5 invisible lg:visible">
                             <a href="/cards" class="hover:bg-gray-100 p-2 px-4 rounded-md duration-200">Cards</a>
                         </div>
                     </div>
                     <div class="flex flex-row">
                         <a href="https://ko-fi.com/athena_learning" target="_blank"
-                           class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 pr-2 duration-200">
+                           class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 pr-2 duration-200 invisible lg:visible">
                             <img class="h-8" alt="ko-fi"
                                  src="https://storage.ko-fi.com/cdn/brandasset/kofi_s_logo_nolabel.png">
                         </a>
                         <a href="https://discord.gg/vNb4suv6Xt" target="_blank"
-                           class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">
+                           class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200 invisible lg:visible">
                             <img alt="discord" class="w-5 h-5 " src="/discord-mark-black.svg"/>
                         </a>
                         <a href="https://github.com/ImGajeed76/athena_v2" target="_blank"
-                           class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200">
+                           class="items-center flex flex-row p-2 rounded-md h-10 justify-center hover:bg-gray-100 mr-2 duration-200 invisible lg:visible">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" class="">
                                 <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
                             </svg>

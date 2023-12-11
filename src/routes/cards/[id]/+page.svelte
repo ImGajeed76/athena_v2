@@ -6,10 +6,12 @@
     import {Card, deleteSet, getSet, saveCardsForSuggestions, updateSetPrivacy} from "$lib/cards";
     import {page} from "$app/stores";
     import {getUsername, loggedIn, currentUser} from "$lib/database";
-    import {getModalStore, ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
+    import {getModalStore, type ModalComponent, ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
     import type {ModalSettings} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation";
     import {permissions_loaded} from "$lib/permissions";
+    import ExportCards from "../../../modules/modals/ExportCards.svelte";
+    import Share from "../../../modules/modals/Share.svelte";
 
     const modalStore = getModalStore();
 
@@ -114,6 +116,19 @@
     }
 
     function share() {
+        const modalComponent: ModalComponent = {ref: Share};
+        const modal: ModalSettings = {
+            type: "component",
+            component: modalComponent,
+            meta: {
+                url: window.location.href,
+            },
+            response: () => {
+            }
+        };
+        modalStore.trigger(modal);
+
+        /*
         const modal: ModalSettings = {
             type: 'confirm',
             title: 'Share',
@@ -126,7 +141,7 @@
                 }
             },
         };
-        modalStore.trigger(modal);
+        modalStore.trigger(modal);*/
     }
 </script>
 

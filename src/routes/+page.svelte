@@ -45,9 +45,9 @@
 <div class="w-screen">
     <div class="w-full max-w-6xl m-auto px-10 xl:px-0">
         <div class="grid grid-rows-[1fr_auto] items-center w-full h-screen">
-            <div class="grid grid-cols-2 items-center h-full">
+            <div class="grid lg:grid-cols-2 grid-cols-1 items-center h-full">
                 <div class="mt-10">
-                    <h1 class="text-6xl font-bold" style="letter-spacing: -1px; line-height: 4.5rem">Welcome to <br> Athena Learning</h1>
+                    <h1 class="lg:text-6xl text-5xl font-bold" style="letter-spacing: -1px; line-height: 1.2">Welcome to <br> Athena Learning</h1>
                     <p class="text-xl mt-6">Dive into our world of free, interactive tools designed to make learning
                         accessible and engaging for everyone.</p>
                     <a href="/signup" class="btn variant-filled-primary mt-10 btn-3d-primary">Create an account</a>
@@ -61,9 +61,12 @@
     </div>
 
     <div class="w-full bg-primary-500">
-        <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 grid-cols-2">
-            <div class="mr-32 h-[26rem] grid items-center text-white">
-                <div class="p-5 h-full w-full flex flex-col justify-between">
+        <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 lg:grid-cols-2 grid-cols-1">
+            <div class="h-fit lg:h-0 visible lg:hidden">
+                <h1 class="text-5xl lg:text-6xl font-bold text-white" style="letter-spacing: -1px; line-height: 1.2">Why Athena?</h1>
+            </div>
+            <div class="lg:mr-32 lg:h-[26rem] h-[28rem] grid items-center text-white">
+                <div class="lg:p-5 h-full w-full flex flex-col justify-between">
                     {#if $athenaArgument === 0}
                         <div in:fly={{ duration: 300 }}>
                             <h3 class="text-4xl mb-4">Free and Open</h3>
@@ -133,14 +136,14 @@
                     </div>
                 </div>
             </div>
-            <div>
-                <h1 class="text-6xl font-bold text-white" style="letter-spacing: -1px; line-height: 4.5rem">Why Athena?</h1>
+            <div class="h-0 lg:h-fit invisible lg:visible">
+                <h1 class="text-5xl lg:text-6xl font-bold text-white" style="letter-spacing: -1px; line-height: 1.2">Why Athena?</h1>
             </div>
         </div>
     </div>
 
     <div class="w-full">
-        <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 grid-cols-2">
+        <div class="w-full max-w-6xl m-auto h-screen grid items-center px-10 xl:px-0 lg:grid-cols-2 grid-cols-1">
             <div>
                 <h1 class="text-6xl font-bold" style="letter-spacing: -1px; line-height: 4.5rem">
                     Join <br>

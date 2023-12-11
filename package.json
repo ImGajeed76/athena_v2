@@ -46,10 +46,12 @@
     "@floating-ui/dom": "1.5.3",
     "@supabase/supabase-js": "^2.38.0",
     "@types/animejs": "^3.1.12",
+    "@types/qrcode": "^1.5.5",
     "@vercel/analytics": "^1.1.1",
     "animejs": "^3.2.1",
     "base64-arraybuffer": "^1.0.2",
     "phaser": "^3.70.0",
+    "qrcode": "^1.5.3",
     "random-org": "^2.2.0",
     "short-unique-id": "^5.0.3"
   }

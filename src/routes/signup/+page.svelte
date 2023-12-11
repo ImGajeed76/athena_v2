@@ -81,9 +81,9 @@
 
 <Modal buttonNeutral="outline-0 variant-ghost-primary text-black focus:variant-filled-primary hover:variant-filled-primary"/>
 
-<div class="w-full h-full grid lg:grid-cols-2">
+<div class="w-full h-full grid lg:grid-cols-2 pt-10 lg:pt-0">
     <div class="w-full p-5 grid items-center">
-        <div class="lg:max-w-lg max-w-md w-full h-fit shadow-stance rounded-md p-5 m-auto">
+        <div class="lg:max-w-lg max-w-md w-full h-fit lg:shadow-stance rounded-md p-5 m-auto">
             <h2 class="h3 font-bold mb-1">Get started</h2>
             <p>Create your new account.</p>
 

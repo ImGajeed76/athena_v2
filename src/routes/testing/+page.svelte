@@ -1,5 +1,6 @@
 <script>
     import UserSearch from "../../modules/other/UserSearch.svelte";
+    import QRCode from "../../modules/other/QRCode.svelte";
 </script>
 
 <style>

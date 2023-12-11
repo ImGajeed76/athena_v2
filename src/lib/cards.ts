@@ -442,12 +442,15 @@ export async function getSetPreviews(): Promise<{
     return result;
 }
 
-export async function getSetSearchPreviews(search: string): Promise<{
-    title: string;
-    short_uuid: string;
-    length: number;
-    author: string;
-}[] | null> {
+export async function getSetSearchPreviews(search: string, last_created_at: string = ""): Promise<{
+    previews: {
+        title: string;
+        short_uuid: string;
+        length: number;
+        author: string;
+    }[]
+    last_created_at: string;
+} | null> {
     if (!get(loggedIn)) {
         console.log("Not logged in")
         return null;
@@ -459,16 +462,19 @@ export async function getSetSearchPreviews(search: string): Promise<{
         return null;
     }
 
+    if (last_created_at === "" || last_created_at === null || last_created_at === undefined) {
+        last_created_at = "1970-01-01T00:00:00Z";
+    }
+
     const {data: cards_data, error: cards_error} = await supabase
-        .from("cards")
-        .select("title, short_uuid, values, editors")
-        .or(`title.ilike.%${search}%,short_uuid.ilike.%${search}%`)
-        .limit(4);
+        .rpc("search_cards", {search, last_created_at});
 
     if (cards_error) {
         console.error(cards_error);
         return null;
     }
+
+    console.log(cards_data)
 
     const result: {
         title: string;
@@ -476,6 +482,10 @@ export async function getSetSearchPreviews(search: string): Promise<{
         length: number;
         author: string;
     }[] = [];
+
+    if (!cards_data) return {previews: result, last_created_at};
+
+    const new_last_created_at = cards_data[cards_data.length - 1]?.created_at as string || last_created_at;
 
     for (const set of cards_data) {
         result.push({
@@ -486,7 +496,10 @@ export async function getSetSearchPreviews(search: string): Promise<{
         })
     }
 
-    return result;
+    return {
+        previews: result,
+        last_created_at: new_last_created_at,
+    };
 }
 
 export async function createNewSet(title: string = "Untitled"): Promise<string> {
