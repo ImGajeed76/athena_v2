@@ -19,6 +19,9 @@
     import {currentUser, get2FAid, loggedIn, logout} from "$lib/database";
     import {inject} from '@vercel/analytics';
     import {formatStars, github_star_count, updateGithubStarCount} from "$lib/other";
+    import {injectSpeedInsights} from '@vercel/speed-insights/sveltekit';
+
+    injectSpeedInsights();
 
     inject({mode: 'production'});
 
