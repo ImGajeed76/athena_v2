@@ -1,18 +1,28 @@
 <script lang="ts">
     import {writable} from "svelte/store";
-    import {Code, getInitials, Group} from "$lib/groups";
-    import {Avatar, getToastStore, ProgressRadial, Tab, TabGroup} from "@skeletonlabs/skeleton";
+    import {Code, deleteGroup, getInitials, Group} from "$lib/groups";
+    import {
+        Avatar,
+        getModalStore,
+        getToastStore,
+        type ModalSettings,
+        ProgressRadial,
+        Tab,
+        TabGroup
+    } from "@skeletonlabs/skeleton";
     import {onMount} from "svelte";
     import {loggedIn} from "$lib/database";
     import {page} from "$app/stores";
     import {goto} from "$app/navigation";
     import {scale, fly} from 'svelte/transition';
     import {backOut, cubicInOut} from "svelte/easing";
+    import {deleteSet} from "$lib/cards";
 
     const group = writable<Group | null>(null);
     const loading = writable<boolean>(true);
 
     const toastStore = getToastStore();
+    const modalStore = getModalStore();
 
     let tabSet: number = 0;
 
@@ -144,6 +154,27 @@
             $randomGroups = [...newGroupsCopy];
         }, 1000);
     }
+
+    async function deleteThisGroup() {
+        if (!$group) return;
+        const modal: ModalSettings = {
+            type: 'prompt',
+            title: 'Confirm Deletion',
+            body: `Are you sure you want to delete this group? This action cannot be undone. Type "${$group.title}" to confirm.`,
+            value: '',
+            valueAttr: {type: 'text', minlength: $group.title.length, maxlength: $group.title.length, required: true},
+            response: async (r: string) => {
+                if (!$group) return false;
+                if (r === $group.title) {
+                    await deleteGroup($group.short_uuid);
+                    await goto("/groups");
+                } else {
+                    return false
+                }
+            },
+        };
+        modalStore.trigger(modal);
+    }
 </script>
 
 {#if $loading}
@@ -165,6 +196,7 @@
                         <button class="btn variant-filled-secondary btn-3d-secondary mr-2"
                                 on:click={() => {if ($group) goto("/groups/edit/" + $group.short_uuid)}}>Edit
                         </button>
+                        <button class="btn variant-filled-error btn-3d-error" on:click={deleteThisGroup}>Delete</button>
                     </div>
                 </div>
 

@@ -397,3 +397,34 @@ export function getInitials(name: string): string {
 
     return words[0][0] + words[words.length - 1][0];
 }
+
+export async function deleteGroup(short_uuid: string): Promise<Code> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return Code.NotLoggedIn;
+    }
+
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return Code.NoEmail;
+    }
+
+    const {data: group, error} = await supabase
+        .from("groups")
+        .delete()
+        .eq("short_uuid", short_uuid);
+
+    if (error) {
+        switch (error.code) {
+            case "PGRST116":
+                console.log("No group found");
+                return Code.NoGroup;
+            default:
+                console.error(error);
+                return Code.UnknownError;
+        }
+    }
+
+    return Code.Success;
+}
