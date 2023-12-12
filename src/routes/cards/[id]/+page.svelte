@@ -127,21 +127,6 @@
             }
         };
         modalStore.trigger(modal);
-
-        /*
-        const modal: ModalSettings = {
-            type: 'confirm',
-            title: 'Share',
-            body: `Thank you for sharing this learning-sets! <br><br> <input class="input" value="${window.location.href}">`,
-            buttonTextCancel: 'Close',
-            buttonTextConfirm: 'Copy',
-            response: (r: boolean) => {
-                if (r) {
-                    navigator.clipboard.writeText(window.location.href)
-                }
-            },
-        };
-        modalStore.trigger(modal);*/
     }
 </script>
 

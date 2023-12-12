@@ -180,6 +180,134 @@ export class Group {
 
         return Code.Success;
     }
+
+    randomNames(nameCount: number): {
+        data: string[] | null;
+        error: {
+            code: string;
+            message: string;
+            details: string;
+        } | null;
+    } {
+        if (nameCount > this.users.length) {
+            return {
+                data: null, error: {
+                    code: "TooManyNames",
+                    message: "Too many names requested",
+                    details: "The number of names requested is greater than the number of users in the group"
+                }
+            };
+        }
+
+        if (nameCount < 1) {
+            return {
+                data: null, error: {
+                    code: "TooFewNames",
+                    message: "Too few names requested",
+                    details: "The number of names requested is less than 1"
+                }
+            };
+        }
+
+        const returnedNames: string[] = [];
+        const maxTries = 1000;
+
+        for (let i = 0; i < nameCount; i++) {
+            let name = "";
+            for (let j = 0; j < maxTries; j++) {
+                name = this.users[Math.floor(Math.random() * this.users.length)];
+                if (!returnedNames.includes(name)) break;
+            }
+            returnedNames.push(name);
+        }
+
+        return {data: returnedNames, error: null};
+    }
+
+    randomGroupsBySize(groupSize: number): {
+        data: string[][] | null;
+        error: {
+            code: string;
+            message: string;
+            details: string;
+        } | null;
+    } {
+        if (groupSize > this.users.length) {
+            return {
+                data: null, error: {
+                    code: "TooManyNames",
+                    message: "Too many names requested",
+                    details: "The number of names requested is greater than the number of users in the group"
+                }
+            };
+        }
+
+        if (groupSize < 1) {
+            return {
+                data: null, error: {
+                    code: "TooFewNames",
+                    message: "Too few names requested",
+                    details: "The number of names requested is less than 1"
+                }
+            };
+        }
+
+        const groupCount = Math.ceil(this.users.length / groupSize);
+        return this.randomGroupsByCount(groupCount);
+    }
+
+    randomGroupsByCount(groupCount: number): {
+        data: string[][] | null;
+        error: {
+            code: string;
+            message: string;
+            details: string;
+        } | null;
+    } {
+        if (groupCount > this.users.length) {
+            return {
+                data: null, error: {
+                    code: "TooManyNames",
+                    message: "Too many names requested",
+                    details: "The number of names requested is greater than the number of users in the group"
+                }
+            };
+        }
+
+        if (groupCount < 1) {
+            return {
+                data: null, error: {
+                    code: "TooFewNames",
+                    message: "Too few names requested",
+                    details: "The number of names requested is less than 1"
+                }
+            };
+        }
+
+        const returnedGroups: string[][] = [];
+        const names = [...this.users];
+
+        for (let i = names.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * i);
+            const temp = names[i];
+            names[i] = names[j];
+            names[j] = temp;
+        }
+
+        for (let i = 0; i < groupCount; i++) {
+            returnedGroups.push([]);
+        }
+
+        let i = 0;
+        while (names.length > 0) {
+            const nextName = names.pop();
+            if (!nextName) break;
+            returnedGroups[i].push(nextName);
+            i = (i + 1) % groupCount;
+        }
+
+        return {data: returnedGroups, error: null};
+    }
 }
 
 export async function getGroupPreviews(): Promise<{
@@ -257,4 +385,15 @@ export async function createNewGroup(): Promise<string> {
     }
 
     return short_uuid;
+}
+
+export function getInitials(name: string): string {
+    name = name.toUpperCase().replace(/[^\w\s]/g, ' ');
+    const words = name.split(/\s+/);
+
+    if (words.length === 1) {
+        return name.substring(0, 2);
+    }
+
+    return words[0][0] + words[words.length - 1][0];
 }
