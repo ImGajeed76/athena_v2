@@ -33,6 +33,12 @@
     const modalStore = getModalStore();
 
     onMount(() => {
+        setTimeout(() => {
+            if (!$loggedIn) {
+                goto('/login?redirect=' + encodeURIComponent($page.route.id || "/"));
+            }
+        }, 2000)
+
         setTimeout(async () => {
             if ($loggedIn && $loading) {
                 const new_set = await getSet($page.params.uid)

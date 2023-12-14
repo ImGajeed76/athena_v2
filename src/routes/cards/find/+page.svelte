@@ -5,6 +5,8 @@
     import {getSetSearchPreviews} from "$lib/cards";
     import {goto} from "$app/navigation";
     import {getModalStore, getToastStore} from "@skeletonlabs/skeleton";
+    import {onMount} from "svelte";
+    import {page} from "$app/stores";
 
     const set_previews = writable<{
         title: string;
@@ -18,6 +20,14 @@
     const search = writable<string>("");
 
     const toastStore = getToastStore();
+
+    onMount(() => {
+        setTimeout(() => {
+            if (!$loggedIn) {
+                goto('/login?redirect=' + encodeURIComponent($page.route.id || "/"));
+            }
+        }, 2000)
+    })
 
     search.subscribe(async (value) => {
         if ($loggedIn) {
