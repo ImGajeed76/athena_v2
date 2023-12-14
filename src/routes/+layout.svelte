@@ -35,7 +35,7 @@
         "/signup",
         "/auth/forgot-password",
         "/auth/reset-password",
-        "/cards/train(/.*)?",
+        "/cards/(.*)?",
         "/ee",
         "/"
     ]
