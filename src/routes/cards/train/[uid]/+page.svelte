@@ -58,8 +58,8 @@
         if (card === undefined) return;
 
         if (trainer.round_side === Side.Value) {
-            card_title.set(card.definition);
-            card_example.set(card.definition_example);
+            card_title.set(card.value);
+            card_example.set(card.value_example);
             card_reference.set(card.reference);
             input_type.set(card.value_streak > 0 ? "text" : "select");
             if (card.value_streak === 0) {
@@ -452,7 +452,15 @@
             {:else if $screen === Screen.Card}
                 <div class="w-full h-full grid items-center relative">
                     <div class="m-auto w-full max-w-2xl h-full max-h-96 shadow-stance p-10 rounded-md">
-                        <p class="text-2xl">{$card_title}</p>
+                        <div class="flex items-center">
+                            <p class="text-2xl">{$card_title}</p>
+                            <button class="ml-3" on:click={() => trainer.playAudio($card_title)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path d="M11.553 3.064A.75.75 0 0 1 12 3.75v16.5a.75.75 0 0 1-1.255.555L5.46 16H2.75A1.75 1.75 0 0 1 1 14.25v-4.5C1 8.784 1.784 8 2.75 8h2.71l5.285-4.805a.752.752 0 0 1 .808-.13ZM10.5 5.445l-4.245 3.86a.748.748 0 0 1-.505.195h-3a.25.25 0 0 0-.25.25v4.5c0 .138.112.25.25.25h3c.187 0 .367.069.505.195l4.245 3.86Zm8.218-1.223a.75.75 0 0 1 1.06 0c4.296 4.296 4.296 11.26 0 15.556a.75.75 0 0 1-1.06-1.06 9.5 9.5 0 0 0 0-13.436.75.75 0 0 1 0-1.06Z"></path>
+                                    <path d="M16.243 7.757a.75.75 0 1 0-1.061 1.061 4.5 4.5 0 0 1 0 6.364.75.75 0 0 0 1.06 1.06 6 6 0 0 0 0-8.485Z"></path>
+                                </svg>
+                            </button>
+                        </div>
 
                         <div class="relative h-full">
                             {#if $input_type === 'select'}
@@ -477,7 +485,8 @@
                                     <form>
                                         <div class="flex flex-row items-center">
                                             {#each $set.trainer.getSpecialChars() as char}
-                                                <button class="btn variant-ghost-secondary btn-sm mr-2 mb-2" on:click={() => {writeChar(char)}}>
+                                                <button class="btn variant-ghost-secondary btn-sm mr-2 mb-2"
+                                                        on:click={() => {writeChar(char)}}>
                                                     {char}
                                                 </button>
                                             {/each}
@@ -485,7 +494,8 @@
                                         <input id="text-input-field" type="text" class="input" placeholder="Your Answer"
                                                bind:value={$input_value}>
                                         <div class="w-full flex justify-end">
-                                            <button class="btn variant-filled-primary mt-2" on:click={submitAnswer}>Submit
+                                            <button class="btn variant-filled-primary mt-2" on:click={submitAnswer}>
+                                                Submit
                                             </button>
                                         </div>
                                     </form>
@@ -500,7 +510,15 @@
                         <div class="w-full h-full shadow-stance p-10 rounded-md">
 
                             {#if !$updateResponse.error}
-                                <p class="text-2xl">{$card_title}</p>
+                                <div class="flex items-center">
+                                    <p class="text-2xl">{$card_title}</p>
+                                    <button class="ml-3" on:click={() => trainer.playAudio($card_title)}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                            <path d="M11.553 3.064A.75.75 0 0 1 12 3.75v16.5a.75.75 0 0 1-1.255.555L5.46 16H2.75A1.75 1.75 0 0 1 1 14.25v-4.5C1 8.784 1.784 8 2.75 8h2.71l5.285-4.805a.752.752 0 0 1 .808-.13ZM10.5 5.445l-4.245 3.86a.748.748 0 0 1-.505.195h-3a.25.25 0 0 0-.25.25v4.5c0 .138.112.25.25.25h3c.187 0 .367.069.505.195l4.245 3.86Zm8.218-1.223a.75.75 0 0 1 1.06 0c4.296 4.296 4.296 11.26 0 15.556a.75.75 0 0 1-1.06-1.06 9.5 9.5 0 0 0 0-13.436.75.75 0 0 1 0-1.06Z"></path>
+                                            <path d="M16.243 7.757a.75.75 0 1 0-1.061 1.061 4.5 4.5 0 0 1 0 6.364.75.75 0 0 0 1.06 1.06 6 6 0 0 0 0-8.485Z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
 
                                 <div class="relative h-full">
                                     {#if $input_type === 'select'}

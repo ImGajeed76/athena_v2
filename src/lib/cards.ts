@@ -2,6 +2,7 @@ import {get, writable} from "svelte/store";
 import {currentUser, loggedIn, supabase} from "$lib/database";
 import {shortUUID} from "$lib/helpers";
 import {permissions, permissions_loaded} from "$lib/permissions";
+import {franc} from "franc";
 
 const CARD_LEARNED = 2;
 
@@ -104,6 +105,33 @@ export type UpdateCardReturn = {
     }
 }
 
+
+export const langMap: Record<string, string> = {
+    'ara': 'ar-SA',
+    'zho': 'zh-CN',
+    'deu': 'de-DE',
+    'dan': 'da-DK',
+    'eng': 'en-US',
+    'fin': 'fi-FI',
+    'hin': 'hi-IN',
+    'ind': 'id-ID',
+    'ita': 'it-IT',
+    'jpn': 'ja-JP',
+    'kor': 'ko-KR',
+    'nld': 'nl-NL',
+    'nor': 'no-NO',
+    'pol': 'pl-PL',
+    'por': 'pt-BR',
+    'rus': 'ru-RU',
+    'spa': 'es-ES',
+    'swe': 'sv-SE',
+    'tha': 'th-TH',
+    'ces': 'cs-CZ',
+    'tur': 'tr-TR',
+    'hun': 'hu-HU',
+    'fra': 'fr-FR',
+};
+
 export class Trainer {
     cards: Card[] = [];
     side_to_learn: "value" | "definition" | "both" = "both";
@@ -125,6 +153,9 @@ export class Trainer {
     round: number = 0;
     round_side: Side = Side.Value;
 
+    valueLanguage: string = "en-US";
+    definitionLanguage: string = "en-US";
+
     constructor(cards: Card[], settings?: LearningSettings, side_to_learn?: "value" | "definition" | "both") {
         this.cards = cards;
         this.settings = settings || this.settings;
@@ -133,6 +164,23 @@ export class Trainer {
         this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
         this.learned_deck = this.cards.filter(card => card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED);
         this.chooseSideToLearn();
+    }
+
+    detectLanguages() {
+        const allValuesCombined = this.cards.map(card => card.value).join(" ");
+        const allDefinitionsCombined = this.cards.map(card => card.definition).join(" ");
+
+        const valuesDetectedLangISO6393: string = franc(allValuesCombined);
+        const definitionsDetectedLangISO6393: string = franc(allDefinitionsCombined);
+
+        console.log(`Detected value language: ${valuesDetectedLangISO6393}`)
+        console.log(`Detected definition language: ${definitionsDetectedLangISO6393}`)
+
+        this.valueLanguage = langMap[valuesDetectedLangISO6393] || "en-US";
+        this.definitionLanguage = langMap[definitionsDetectedLangISO6393] || "en-US";
+
+        console.log(`Using value language: ${this.valueLanguage}`)
+        console.log(`Using definition language: ${this.definitionLanguage}`)
     }
 
     import(trainer: Trainer) {
@@ -147,7 +195,11 @@ export class Trainer {
         this.learn_percentage = trainer.learn_percentage;
         this.settings = trainer.settings;
         this.round = trainer.round;
-        this.round_side = trainer.round_side;
+        this.chooseSideToLearn();
+
+        if (trainer.valueLanguage) this.valueLanguage = trainer.valueLanguage;
+        if (trainer.definitionLanguage) this.definitionLanguage = trainer.definitionLanguage;
+        if (!trainer.valueLanguage || !trainer.definitionLanguage) this.detectLanguages();
     }
 
     refresh() {
@@ -334,6 +386,43 @@ export class Trainer {
         }
 
         return [...new Set(chars)];
+    }
+
+    async playAudio(cardText: string, lang: string | null = null) {
+        // find card
+        const card = this.cards.find(card => card.value === cardText || card.definition === cardText);
+        if (!card) return;
+
+        // get the side of the card by checking if the cardText is the value or the definition
+        const side = card.value === cardText ? Side.Value : Side.Definition;
+        const langToUse = lang || (side === Side.Value ? this.valueLanguage : this.definitionLanguage);
+
+        cardText = cardText.replaceAll(/\/|;|\(.*?\)/g, "; ");
+
+        const response = await fetch("/api/tts", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: cardText,
+                gender: "male",
+                lang: langToUse
+            }),
+        })
+
+        if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const blob = new Blob([arrayBuffer], {type: "audio/wav"});
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play().catch((error) => {
+                console.error('Error message:', error.message);
+                console.error('Error name:', error.name);
+            });
+        } else {
+            console.error(response)
+        }
     }
 }
 
