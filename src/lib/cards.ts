@@ -391,7 +391,7 @@ export class Trainer {
     async playAudio(cardText: string, lang: string | null = null) {
         // find card
         const card = this.cards.find(card => card.value === cardText || card.definition === cardText);
-        if (!card) return;
+        if (card === undefined) return;
 
         // get the side of the card by checking if the cardText is the value or the definition
         const side = card.value === cardText ? Side.Value : Side.Definition;
