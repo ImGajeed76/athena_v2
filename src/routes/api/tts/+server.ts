@@ -4,9 +4,11 @@ import {PRIVATE_SPEECH_KEY, PRIVATE_SPEECH_REGION} from "$env/static/private";
 import {shortUUID} from "$lib/helpers";
 import {promises as fs} from "fs";
 import {resolve as resolvePath} from "path";
-import {encode} from "he";
+import he from "he";
 import {franc} from "franc";
 import {langMap} from "$lib/cards";
+
+const { encode } = he;
 
 const speechConfig = sdk.SpeechConfig.fromSubscription(
     PRIVATE_SPEECH_KEY,
