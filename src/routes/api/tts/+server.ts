@@ -64,12 +64,13 @@ export const POST: RequestHandler<Record<string, never>> = async ({request}): Pr
 
     const tempFileName = `${shortUUID()}.wav`;
 
-    const audioConfig = sdk.AudioConfig.fromAudioFileOutput(tempFileName);
+    const pullStream = sdk.AudioOutputStream.createPullStream();
+    const audioConfig = sdk.AudioConfig.fromStreamOutput(pullStream);
     const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
 
     try {
         console.log(`Synthesizing text: ${text}`)
-
+        let audioData: Uint8Array[] = [];
         await new Promise<void>((resolve, reject) => {
             synthesizer.speakSsmlAsync(
                 generateSSML(text, speakers[speakersGender], lang),
@@ -77,6 +78,7 @@ export const POST: RequestHandler<Record<string, never>> = async ({request}): Pr
                     synthesizer.close();
                     if (result) {
                         console.log(`Speech synthesis succeeded.`);
+                        audioData.push(Buffer.from(result.audioData));
                         resolve();
                     } else {
                         console.error("Speech synthesis canceled or failed.")
@@ -91,9 +93,7 @@ export const POST: RequestHandler<Record<string, never>> = async ({request}): Pr
             );
         });
 
-        const audioData = await fs.readFile(resolvePath(tempFileName));
-        await fs.unlink(tempFileName);
-        return new Response(audioData, {headers: {"Content-Type": "audio/wav"}});
+        return new Response(Buffer.concat(audioData), {headers: {"Content-Type": "audio/wav"}});
     } catch (error) {
         console.error(error);
         synthesizer.close();
