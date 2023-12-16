@@ -1,14 +1,11 @@
 import {json, type RequestHandler} from "@sveltejs/kit";
 import sdk from "microsoft-cognitiveservices-speech-sdk"
 import {PRIVATE_SPEECH_KEY, PRIVATE_SPEECH_REGION} from "$env/static/private";
-import {shortUUID} from "$lib/helpers";
-import {promises as fs} from "fs";
-import {resolve as resolvePath} from "path";
 import he from "he";
 import {franc} from "franc";
 import {langMap} from "$lib/cards";
 
-const { encode } = he;
+const {encode} = he;
 
 const speechConfig = sdk.SpeechConfig.fromSubscription(
     PRIVATE_SPEECH_KEY,
@@ -29,31 +26,34 @@ const ssmlTemplate = `
 `
 
 
-
-function generateSSML(text: string, name: string, lang: string | null = null) {
-    const sanitizedText = encode(text);
-    let langToUse = lang;
-
-    if (!lang) {
-        const detectedLangISO6393: string = franc(sanitizedText);
-
-        console.log(`Detected language: ${detectedLangISO6393}`)
-
-        let langToUse = langMap[detectedLangISO6393];
-
-        if (!langToUse) {
-            langToUse = 'en-US';
-        }
-
-        console.log(`Using language: ${langToUse}`)
-    }
-
-    return ssmlTemplate.replace("$$TEXT$$", sanitizedText).replace("$$LANG$$", langToUse as string).replace("$$NAME$$", name);
+function generateSSML(text: string, name: string, lang: string) {
+    return ssmlTemplate.replace("$$TEXT$$", text).replace("$$LANG$$", lang).replace("$$NAME$$", name);
 }
+
+
+const ttsCache = new Map<string, {
+    array: Uint8Array,
+    lastUsed: number
+}>();
 
 export const POST: RequestHandler<Record<string, never>> = async ({request}): Promise<Response> => {
     let {text, gender, lang} = await request.json();
     gender = gender.toLowerCase();
+    text = encode(text);
+
+    if (!lang) {
+        const detectedLangISO6393: string = franc(text);
+
+        console.log(`Detected language: ${detectedLangISO6393}`)
+
+        lang = langMap[detectedLangISO6393];
+
+        if (!lang) {
+            lang = 'en-US';
+        }
+
+        console.log(`Using language: ${lang}`)
+    }
 
     if (!(gender === "male" || gender === "female")) {
         return json({}, {status: 400})
@@ -62,7 +62,20 @@ export const POST: RequestHandler<Record<string, never>> = async ({request}): Pr
     const speakersGender: "male" | "female" = gender;
     speechConfig.speechSynthesisVoiceName = speakers[speakersGender];
 
-    const tempFileName = `${shortUUID()}.wav`;
+    const cacheKey = `${text}-${speakersGender}-${lang}`;
+    if (ttsCache.has(cacheKey)) {
+        console.log(`Cache hit for ${cacheKey}`);
+        const cachedResponse = ttsCache.get(cacheKey);
+        if (cachedResponse) {
+            ttsCache.set(cacheKey, {
+                array: cachedResponse.array,
+                lastUsed: Date.now()
+            });
+            return new Response(cachedResponse.array, {headers: {"Content-Type": "audio/wav"}});
+        } else {
+            console.log(`Cache hit for ${cacheKey} was empty, regenerating...`);
+        }
+    }
 
     const pullStream = sdk.AudioOutputStream.createPullStream();
     const audioConfig = sdk.AudioConfig.fromStreamOutput(pullStream);
@@ -93,6 +106,29 @@ export const POST: RequestHandler<Record<string, never>> = async ({request}): Pr
             );
         });
 
+        if (ttsCache.size > 100) {
+            let cacheSize = 0;
+            for (const [_, value] of ttsCache) {
+                cacheSize += value.array.length;
+            }
+
+            const cacheSizeMB = cacheSize / 1024 / 1024;
+            if (cacheSizeMB > 1024) {
+                const sortedCache = new Map([...ttsCache.entries()].sort((a, b) => a[1].lastUsed - b[1].lastUsed));
+                for (const [key, value] of sortedCache) {
+                    ttsCache.delete(key);
+                    cacheSize -= value.array.length;
+                    if (cacheSize < 512) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        ttsCache.set(cacheKey, {
+            array: Buffer.concat(audioData),
+            lastUsed: Date.now()
+        });
         return new Response(Buffer.concat(audioData), {headers: {"Content-Type": "audio/wav"}});
     } catch (error) {
         console.error(error);
