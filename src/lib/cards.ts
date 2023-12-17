@@ -132,19 +132,24 @@ export const langMap: Record<string, string> = {
     'fra': 'fr-FR',
 };
 
+export function cardIndex(card: Card, cards: Card[]): number {
+    return cards.findIndex(c => c.value === card.value && c.definition === card.definition && c.value_example === card.value_example && c.definition_example === card.definition_example && c.reference === card.reference);
+}
+
 export class Trainer {
     cards: Card[] = [];
     side_to_learn: "value" | "definition" | "both" = "both";
 
     learned_deck: Card[] = [];
+
+    learning_deck: Card[] = [];
     current_deck: Card[] = [];
+
     unlearned_deck: Card[] = [];
-    repetition_deck: Card[] = [];
 
-    current_card_index: number = 0;
-    current_deck_length: number = 5;
+    current_round_length: number = 5;
+    default_round_length: number = 5;
 
-    learn_percentage: number = 0;
     settings: LearningSettings = {
         allow_partial_answers: false,
         case_sensitive: false
@@ -153,8 +158,10 @@ export class Trainer {
     round: number = 0;
     round_side: Side = Side.Value;
 
-    valueLanguage: string = "en-US";
-    definitionLanguage: string = "en-US";
+    value_language: string = "en-US";
+    definition_language: string = "en-US";
+
+    classVersion: number = 2;
 
     constructor(cards: Card[], settings?: LearningSettings, side_to_learn?: "value" | "definition" | "both") {
         this.cards = cards;
@@ -176,41 +183,54 @@ export class Trainer {
         console.log(`Detected value language: ${valuesDetectedLangISO6393}`)
         console.log(`Detected definition language: ${definitionsDetectedLangISO6393}`)
 
-        this.valueLanguage = langMap[valuesDetectedLangISO6393] || "en-US";
-        this.definitionLanguage = langMap[definitionsDetectedLangISO6393] || "en-US";
+        this.value_language = langMap[valuesDetectedLangISO6393] || "en-US";
+        this.definition_language = langMap[definitionsDetectedLangISO6393] || "en-US";
 
-        console.log(`Using value language: ${this.valueLanguage}`)
-        console.log(`Using definition language: ${this.definitionLanguage}`)
+        console.log(`Using value language: ${this.value_language}`)
+        console.log(`Using definition language: ${this.definition_language}`)
     }
 
     import(trainer: Trainer) {
-        this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
-        this.side_to_learn = trainer.side_to_learn;
-        this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
-        this.current_deck = trainer.current_deck.map(card => (new Card("", "")).import(card));
-        this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
-        this.repetition_deck = trainer.repetition_deck.map(card => (new Card("", "")).import(card));
-        this.current_card_index = trainer.current_card_index;
-        this.current_deck_length = trainer.current_deck_length;
-        this.learn_percentage = trainer.learn_percentage;
-        this.settings = trainer.settings;
-        this.round = trainer.round;
-        this.chooseSideToLearn();
+        if (!trainer.classVersion) {
+            this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
+            this.side_to_learn = trainer.side_to_learn;
+            this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
+            this.learning_deck = trainer.current_deck.map(card => (new Card("", "")).import(card));
+            this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
+            this.settings = trainer.settings;
+            this.round = trainer.round;
+            this.chooseSideToLearn();
 
-        if (trainer.valueLanguage) this.valueLanguage = trainer.valueLanguage;
-        if (trainer.definitionLanguage) this.definitionLanguage = trainer.definitionLanguage;
-        if (!trainer.valueLanguage || !trainer.definitionLanguage) this.detectLanguages();
+            if (trainer.value_language) this.value_language = trainer.value_language;
+            if (trainer.definition_language) this.definition_language = trainer.definition_language;
+            if (!trainer.value_language || !trainer.definition_language) this.detectLanguages();
+        } else if (trainer.classVersion === 2) {
+            this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
+            this.side_to_learn = trainer.side_to_learn;
+            this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
+            this.learning_deck = trainer.learning_deck.map(card => (new Card("", "")).import(card));
+            this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
+            this.settings = trainer.settings;
+            this.round = trainer.round;
+            this.chooseSideToLearn();
+
+            if (trainer.value_language) this.value_language = trainer.value_language;
+            if (trainer.definition_language) this.definition_language = trainer.definition_language;
+            if (!trainer.value_language || !trainer.definition_language) this.detectLanguages();
+        }
+
+        console.log(this)
     }
 
     refresh() {
         this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
         this.learned_deck = this.cards.filter(card => card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED);
-        this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
     }
 
-    chooseSideToLearn() {
+    chooseSideToLearn(random: boolean = true) {
         if (this.side_to_learn === "both") {
-            this.round_side = Math.random() < 0.5 ? Side.Value : Side.Definition;
+            if (random) this.round_side = Math.random() < 0.5 ? Side.Value : Side.Definition;
+            else this.round_side = this.round_side === Side.Value ? Side.Definition : Side.Value;
         } else {
             this.round_side = this.side_to_learn === "value" ? Side.Value : Side.Definition;
         }
@@ -233,37 +253,39 @@ export class Trainer {
     }
 
     get nextCard(): NextCardReturn {
-        console.log(this.learned_deck, this.current_deck, this.repetition_deck, this.unlearned_deck)
-
-        if (this.repetition_deck.length > 0 && this.current_card_index >= this.current_deck_length) {
-            const card = this.repetition_deck[this.randomIndex(this.repetition_deck)];
-            this.repetition_deck.splice(this.repetition_deck.indexOf(card), 1);
-            return {card, side: this.round_side, error: null};
+        while (this.learning_deck.length < this.default_round_length) {
+            const card = this.unlearned_deck[this.randomIndex(this.unlearned_deck)];
+            this.learning_deck.push(card);
+            this.unlearned_deck.splice(cardIndex(card, this.unlearned_deck), 1);
         }
-
-        while (this.current_deck.length < this.current_deck_length) {
-            if (this.unlearned_deck.length === 0) break;
-
-            const index = this.randomIndex(this.unlearned_deck);
-            this.current_deck.push(this.unlearned_deck[index]);
-            this.unlearned_deck.splice(index, 1);
-        }
-
-        this.current_deck_length = Math.min(this.current_deck_length, this.current_deck.length);
 
         if (this.current_deck.length === 0) {
-            return {
-                error: {
-                    message: "No cards to learn",
-                    type: ErrorType.NoCards
+            if (this.unlearned_deck.length === 0) {
+                return {
+                    error: {
+                        message: "No cards left",
+                        type: ErrorType.NoCards,
+                    }
                 }
+            } else {
+                this.current_deck = [...this.learning_deck];
+                this.current_deck.sort(() => Math.random() - 0.5);
+                this.current_round_length = this.learning_deck.length;
             }
         }
 
-        const card = this.current_deck[Math.min(this.current_card_index, this.current_deck.length - 1)];
-        console.log(this.learned_deck, this.current_deck, this.repetition_deck, this.unlearned_deck)
+        const nextCard = this.current_deck[0];
+        this.current_deck.splice(cardIndex(nextCard, this.current_deck), 1);
 
-        return {card, side: this.round_side, error: null};
+        const side = this.round_side;
+
+        console.log(this)
+
+        return {
+            card: nextCard,
+            side: side,
+            error: null,
+        }
     }
 
     updateCard(card: Card, side: Side, answer: string, solve_time: number): UpdateCardReturn {
@@ -280,11 +302,11 @@ export class Trainer {
         answer = answer.trim();
 
         if (side === Side.Value) {
-            right_answer = card.value;
+            right_answer = card.definition;
         }
 
         if (side === Side.Definition) {
-            right_answer = card.definition;
+            right_answer = card.value;
         }
 
         if (this.settings.case_sensitive && answer === right_answer) correct = true;
@@ -302,58 +324,64 @@ export class Trainer {
             if (right_answer.toLowerCase().replace(/\(.*?\)/g, "").trim().split(";").includes(answer.toLowerCase())) correct = true;
         }
 
+        if (side === Side.Value) {
+            card.value_seen++;
+        } else {
+            card.definition_seen++;
+        }
+
         if (correct) {
             if (side === Side.Value) {
                 card.value_streak++;
-                card.value_seen++;
-            }
-
-            if (side === Side.Definition) {
+            } else {
                 card.definition_streak++;
-                card.definition_seen++;
             }
 
             card.addSolveTime(solve_time);
         } else {
             if (side === Side.Value) {
-                if (card.value_streak == 0) {
-                    this.repetition_deck.push(card);
+                if (card.value_streak === 0) {
+                    this.current_deck.push(card);
+                    this.current_round_length++;
                 } else {
                     card.value_streak = 1;
                 }
             }
 
             if (side === Side.Definition) {
-                if (card.definition_streak == 0) {
-                    this.repetition_deck.push(card);
+                if (card.definition_streak === 0) {
+                    this.current_deck.push(card);
+                    this.current_round_length++;
                 } else {
                     card.definition_streak = 1;
                 }
             }
         }
 
+        this.learning_deck[cardIndex(card, this.learning_deck)] = card;
+
         if (card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED) {
             this.learned_deck.push(card);
-            this.current_deck.splice(this.current_deck.indexOf(card), 1);
+            this.learning_deck.splice(cardIndex(card, this.learning_deck), 1);
         }
 
-        this.current_card_index++;
-        if (this.current_card_index >= this.current_deck_length && this.repetition_deck.length === 0) {
-            this.current_card_index = 0;
+        if (this.current_deck.length === 0) {
             this.round++;
-            this.chooseSideToLearn();
-            this.current_deck.sort(() => Math.random() - 0.5);
-        } else if (this.current_deck.length === 0 && this.repetition_deck.length === 0) {
-            this.current_card_index = 0;
-            this.round++;
-            this.chooseSideToLearn();
+            this.chooseSideToLearn(false);
         }
 
-
-        this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
         console.log(this.learn_percentage)
 
         return {card, side, correct, correct_answer: right_answer, error: null};
+    }
+
+    get learn_percentage(): number {
+        const valueStreakSum = this.learned_deck.reduce((a, b) => a + b.value_streak, 0) + this.learning_deck.reduce((a, b) => a + b.value_streak, 0);
+        const definitionStreakSum = this.learned_deck.reduce((a, b) => a + b.definition_streak, 0) + this.learning_deck.reduce((a, b) => a + b.definition_streak, 0);
+        const totalStreakSum = valueStreakSum + definitionStreakSum;
+        const maxStreakSum = this.cards.length * CARD_LEARNED * 2;
+
+        return Math.round((totalStreakSum / maxStreakSum) * 100);
     }
 
     restart() {
@@ -365,9 +393,8 @@ export class Trainer {
 
         this.learned_deck = [];
         this.current_deck = [];
-        this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
-        this.current_deck_length = 5;
-        this.learn_percentage = 0;
+        this.learning_deck = [];
+        this.unlearned_deck = [...this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED)];
         this.round = 0;
     }
 
@@ -395,7 +422,7 @@ export class Trainer {
 
         // get the side of the card by checking if the cardText is the value or the definition
         const side = card.value === cardText ? Side.Value : Side.Definition;
-        const langToUse = lang || (side === Side.Value ? this.valueLanguage : this.definitionLanguage);
+        const langToUse = lang || (side === Side.Value ? this.value_language : this.definition_language);
 
         cardText = cardText.replaceAll(/\/|;|\(.*?\)/g, "; ");
 

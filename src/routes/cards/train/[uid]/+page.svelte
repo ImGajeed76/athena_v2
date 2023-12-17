@@ -22,16 +22,20 @@
 
     const screen = writable<Screen>(Screen.Start);
     const round = writable<number>(0);
+    const roundSide = writable<Side>(Side.Value);
+    const readyToRender = writable<boolean>(false);
+
+    roundSide.subscribe((side) => console.log(side))
 
     const currentCard = writable<Card>();
 
-    const card_title = writable<string>("");
-    const card_example = writable<string | null>("");
-    const card_reference = writable<string | null>("");
-    const input_type = writable<"text" | "select">("text");
-    const input_value = writable<string>("");
-    const input_options = writable<Card[]>([]);
-    const input_selected_option = writable<number>(0);
+    const cardTitle = writable<string>("");
+    const cardExample = writable<string | null>("");
+    const cardReference = writable<string | null>("");
+    const inputType = writable<"text" | "select">("text");
+    const inputValue = writable<string>("");
+    const inputOptions = writable<Card[]>([]);
+    const inputSelectedOption = writable<number>(0);
 
     const updateResponse = writable<UpdateCardReturn>();
 
@@ -41,7 +45,9 @@
 
     const modalStore = getModalStore();
 
-    card_title.subscribe(() => {
+    const enterEnabled = writable<boolean>(true);
+
+    cardTitle.subscribe(() => {
         setTimeout(() => {
             if (mounted && window && document) {
                 const input_element = document.getElementById("text-input-field") as HTMLInputElement;
@@ -57,44 +63,50 @@
     currentCard.subscribe((card) => {
         if (card === undefined) return;
 
-        if (trainer.round_side === Side.Value) {
-            card_title.set(card.value);
-            card_example.set(card.value_example);
-            card_reference.set(card.reference);
-            input_type.set(card.value_streak > 0 ? "text" : "select");
+        if ($roundSide === Side.Value) {
+            cardTitle.set(card.value);
+            cardExample.set(card.value_example);
+            cardReference.set(card.reference);
+            inputType.set(card.value_streak > 0 ? "text" : "select");
             if (card.value_streak === 0) {
                 const options = [card];
                 for (let i = 0; i < Math.min(3, trainer.cards.length - 1); i++) {
                     options.push(trainer.randomCard(options));
                 }
                 options.sort(() => Math.random() - 0.5);
-                input_options.set(options);
+                inputOptions.set(options);
             }
+            setTimeout(() => {
+                readyToRender.set(true);
+            }, 50)
         }
 
-        if (trainer.round_side === Side.Definition) {
-            card_title.set(card.value);
-            card_example.set(card.value_example);
-            card_reference.set(card.reference);
-            input_type.set(card.definition_streak > 0 ? "text" : "select");
+        if ($roundSide === Side.Definition) {
+            cardTitle.set(card.definition);
+            cardExample.set(card.definition_example);
+            cardReference.set(card.reference);
+            inputType.set(card.definition_streak > 0 ? "text" : "select");
             if (card.definition_streak === 0) {
                 const options = [card];
                 for (let i = 0; i < 3; i++) {
                     options.push(trainer.randomCard(options));
                 }
                 options.sort(() => Math.random() - 0.5);
-                input_options.set(options);
+                inputOptions.set(options);
             }
+            setTimeout(() => {
+                readyToRender.set(true);
+            }, 50)
         }
     })
 
     function selectAnswer(card: Card) {
-        input_selected_option.set($input_options.indexOf(card));
-        update(trainer.round_side === Side.Value ? card.value : card.definition);
+        inputSelectedOption.set($inputOptions.indexOf(card));
+        update($roundSide === Side.Definition ? card.value : card.definition);
     }
 
     function submitAnswer() {
-        update($input_value);
+        update($inputValue);
     }
 
     function update(answer: string) {
@@ -105,7 +117,7 @@
 
         updateProgress.set(true);
 
-        updateResponse.set(trainer.updateCard($currentCard, trainer.round_side, answer, 0));
+        updateResponse.set(trainer.updateCard($currentCard, $roundSide, answer, 0));
         screen.set(Screen.Card_End);
         if (!$updateResponse.error && $updateResponse.correct) {
             setTimeout(() => {
@@ -123,6 +135,7 @@
             } else {
                 saveProgress($set.progress_uuid, trainer);
             }
+            upperProgress1000.set(0);
             return;
         }
 
@@ -133,7 +146,8 @@
             return;
         }
 
-        input_value.set("");
+        inputValue.set("");
+        readyToRender.set(false);
         screen.set(Screen.Card);
     }
 
@@ -141,6 +155,7 @@
         if ($screen === Screen.Card) {
             const response = trainer.nextCard as NextCardReturn;
             if (!response.error) {
+                roundSide.set(response.side);
                 currentCard.set(response.card);
             }
         }
@@ -183,18 +198,33 @@
                 window.removeEventListener("keypress", onKeyPress);
                 return;
             }
-            if ($screen === Screen.Card_End || $screen === Screen.Round_End) nextCard();
-            if ($screen === Screen.Card && $input_type === "select") {
-                if (event.key === "1" && $input_options.length > 0) selectAnswer($input_options[0]);
-                if (event.key === "2" && $input_options.length > 1) selectAnswer($input_options[1]);
-                if (event.key === "3" && $input_options.length > 2) selectAnswer($input_options[2]);
-                if (event.key === "4" && $input_options.length > 3) selectAnswer($input_options[3]);
+            if ($screen === Screen.Card_End || $screen === Screen.Round_End) {
+                if (event.key === "Enter") $enterEnabled = false;
+                nextCard();
             }
-            if (event.key === "Enter" && $screen === Screen.Card && $input_type === "text") submitAnswer();
+            if ($screen === Screen.Card && $inputType === "select") {
+                if (event.key === "1" && $inputOptions.length > 0) selectAnswer($inputOptions[0]);
+                if (event.key === "2" && $inputOptions.length > 1) selectAnswer($inputOptions[1]);
+                if (event.key === "3" && $inputOptions.length > 2) selectAnswer($inputOptions[2]);
+                if (event.key === "4" && $inputOptions.length > 3) selectAnswer($inputOptions[3]);
+            }
+            if (event.key === "Enter" && $screen === Screen.Card && $inputType === "text" && $enterEnabled) {
+                $enterEnabled = false;
+                submitAnswer();
+            }
             if (event.key === "Escape") escape();
         }
 
+        const onKeyUp = (event: KeyboardEvent) => {
+            if (!$page.route.id?.startsWith("/cards/train/")) {
+                window.removeEventListener("keyup", onKeyUp);
+                return;
+            }
+            if (event.key === "Enter") $enterEnabled = true;
+        }
+
         window.addEventListener("keydown", onKeyPress)
+        window.addEventListener("keyup", onKeyUp)
 
         //---------Execution--------
         setTimeout(() => {
@@ -246,18 +276,19 @@
                 }
             }
         })
-    })
 
-    setInterval(() => {
-        if (!$updateProgress) return;
-        let currentLength = trainer.current_card_index;
-        if (currentLength === 0 && trainer.repetition_deck.length > 0) currentLength = trainer.current_deck_length;
-        upperProgress.set(currentLength / (trainer.current_deck_length + trainer.repetition_deck.length));
-        if ($upperProgress < 0 || !$upperProgress) upperProgress.set(0);
-        const diff = ($upperProgress * 1000) - $upperProgress1000;
-        upperProgress1000.set($upperProgress1000 + diff / 5);
-        if (diff < 0.1 && diff > -0.1) updateProgress.set(false);
-    }, 10)
+        function updateProgressBar() {
+            requestAnimationFrame(updateProgressBar)
+            if (!$updateProgress) return;
+            upperProgress.set((trainer.current_round_length - trainer.current_deck.length) / (trainer.current_round_length) );
+            if ($upperProgress < 0 || !$upperProgress) upperProgress.set(0);
+            const diff = ($upperProgress * 1000) - $upperProgress1000;
+            upperProgress1000.set($upperProgress1000 + diff / 5);
+            if (diff < 0.1 && diff > -0.1) updateProgress.set(false);
+        }
+
+        updateProgressBar();
+    })
 
     let resizeCanvas: () => void;
     let randomRange: (min: number, max: number) => number;
@@ -394,7 +425,7 @@
     }
 
     function writeChar(char: string) {
-        input_value.set($input_value + char);
+        inputValue.set($inputValue + char);
         const input_element = document.getElementById("text-input-field") as HTMLInputElement;
         if (!input_element) return;
         setTimeout(() => {
@@ -419,7 +450,7 @@
         <canvas class="confetti absolute top-0 left-0 w-screen h-screen -z-10" id="canvas"></canvas>
         <ProgressBar value={$upperProgress1000} max={1000} meter="bg-secondary-500"
                      class="absolute top-16 duration-200"/>
-        <div class="absolute top-16 left-0 m-5 ml-9 z-50">
+        <div class="absolute top-16 left-0 m-5 md:ml-9 z-50">
             <button on:click={escape}
                     class="outline rounded-full p-1 outline-1 outline-gray-300 hover:bg-secondary-500 duration-200 hover:scale-110 hover:outline-none active:scale-90">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -428,7 +459,7 @@
                 </svg>
             </button>
         </div>
-        <div class="absolute top-16 right-0 m-5 mr-9 z-50">
+        <div class="absolute top-16 right-0 m-5 md:mr-9 z-50">
             <button on:click={() => goto("/cards/train/settings/" + $set.set_uuid)}
                     class="outline rounded-full p-1 outline-1 hover:rotate-90 duration-200 outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -449,12 +480,12 @@
                         </div>
                     </div>
                 </div>
-            {:else if $screen === Screen.Card}
+            {:else if $screen === Screen.Card && $readyToRender}
                 <div class="w-full h-full grid items-center relative">
-                    <div class="m-auto w-full max-w-2xl h-full max-h-96 shadow-stance p-10 rounded-md">
+                    <div class="m-auto w-full max-w-2xl h-full max-h-96 md:shadow-stance p-10 rounded-md">
                         <div class="flex items-center">
-                            <p class="text-2xl">{$card_title}</p>
-                            <button class="ml-3" on:click={() => trainer.playAudio($card_title)}>
+                            <p class="text-2xl">{$cardTitle}</p>
+                            <button class="ml-3" on:click={() => trainer.playAudio($cardTitle)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                     <path d="M11.553 3.064A.75.75 0 0 1 12 3.75v16.5a.75.75 0 0 1-1.255.555L5.46 16H2.75A1.75 1.75 0 0 1 1 14.25v-4.5C1 8.784 1.784 8 2.75 8h2.71l5.285-4.805a.752.752 0 0 1 .808-.13ZM10.5 5.445l-4.245 3.86a.748.748 0 0 1-.505.195h-3a.25.25 0 0 0-.25.25v4.5c0 .138.112.25.25.25h3c.187 0 .367.069.505.195l4.245 3.86Zm8.218-1.223a.75.75 0 0 1 1.06 0c4.296 4.296 4.296 11.26 0 15.556a.75.75 0 0 1-1.06-1.06 9.5 9.5 0 0 0 0-13.436.75.75 0 0 1 0-1.06Z"></path>
                                     <path d="M16.243 7.757a.75.75 0 1 0-1.061 1.061 4.5 4.5 0 0 1 0 6.364.75.75 0 0 0 1.06 1.06 6 6 0 0 0 0-8.485Z"></path>
@@ -463,18 +494,18 @@
                         </div>
 
                         <div class="relative h-full">
-                            {#if $input_type === 'select'}
+                            {#if $inputType === 'select'}
                                 <div class="w-full absolute bottom-0 mb-7">
                                     <p class="mb-3">Choose the right answer</p>
                                     <div class="w-full grid grid-cols-2">
-                                        {#each $input_options as option, index}
+                                        {#each $inputOptions as option, index}
                                             <div class="w-full h-full p-2">
                                                 <button class="w-full h-full btn variant-ghost hover:variant-filled-primary hover:shadow-2xl duration-200 p-4"
                                                         on:click={() => selectAnswer(option)}
                                                 >
                                                     {index + 1}.
                                                     <br>
-                                                    <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
+                                                    <span class="text-start w-full truncate ...">{$roundSide === Side.Definition ? option.value : option.definition}</span>
                                                 </button>
                                             </div>
                                         {/each}
@@ -492,7 +523,7 @@
                                             {/each}
                                         </div>
                                         <input id="text-input-field" type="text" class="input" placeholder="Your Answer"
-                                               bind:value={$input_value}>
+                                               bind:value={$inputValue}>
                                         <div class="w-full flex justify-end">
                                             <button class="btn variant-filled-primary mt-2" on:click={submitAnswer}>
                                                 Submit
@@ -507,12 +538,12 @@
             {:else if $screen === Screen.Card_End}
                 <div class="w-full h-full grid items-center">
                     <div class="m-auto w-full max-w-2xl h-full max-h-96">
-                        <div class="w-full h-full shadow-stance p-10 rounded-md">
+                        <div class="w-full h-full md:shadow-stance p-10 rounded-md">
 
                             {#if !$updateResponse.error}
                                 <div class="flex items-center">
-                                    <p class="text-2xl">{$card_title}</p>
-                                    <button class="ml-3" on:click={() => trainer.playAudio($card_title)}>
+                                    <p class="text-2xl">{$cardTitle}</p>
+                                    <button class="ml-3" on:click={() => trainer.playAudio($cardTitle)}>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                             <path d="M11.553 3.064A.75.75 0 0 1 12 3.75v16.5a.75.75 0 0 1-1.255.555L5.46 16H2.75A1.75 1.75 0 0 1 1 14.25v-4.5C1 8.784 1.784 8 2.75 8h2.71l5.285-4.805a.752.752 0 0 1 .808-.13ZM10.5 5.445l-4.245 3.86a.748.748 0 0 1-.505.195h-3a.25.25 0 0 0-.25.25v4.5c0 .138.112.25.25.25h3c.187 0 .367.069.505.195l4.245 3.86Zm8.218-1.223a.75.75 0 0 1 1.06 0c4.296 4.296 4.296 11.26 0 15.556a.75.75 0 0 1-1.06-1.06 9.5 9.5 0 0 0 0-13.436.75.75 0 0 1 0-1.06Z"></path>
                                             <path d="M16.243 7.757a.75.75 0 1 0-1.061 1.061 4.5 4.5 0 0 1 0 6.364.75.75 0 0 0 1.06 1.06 6 6 0 0 0 0-8.485Z"></path>
@@ -521,7 +552,7 @@
                                 </div>
 
                                 <div class="relative h-full">
-                                    {#if $input_type === 'select'}
+                                    {#if $inputType === 'select'}
                                         <div class="w-full absolute bottom-0 mb-7">
                                             {#if $updateResponse.correct}
                                                 <p class="mb-3 text-success-500">Well done!</p>
@@ -530,29 +561,29 @@
                                             {/if}
                                             <p class="mb-3"></p>
                                             <div class="w-full grid grid-cols-2">
-                                                {#each $input_options as option, index}
-                                                    {#if $input_selected_option === index && $updateResponse.correct}
+                                                {#each $inputOptions as option, index}
+                                                    {#if $inputSelectedOption === index && $updateResponse.correct}
                                                         <div class="w-full h-full p-2">
                                                             <div class="w-full h-full btn bg-success-600 duration-200 p-4">
                                                                 {index + 1}.
                                                                 <br>
-                                                                <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
+                                                                <span class="text-start w-full truncate ...">{$roundSide === Side.Definition ? option.value : option.definition}</span>
                                                             </div>
                                                         </div>
-                                                    {:else if $input_selected_option === index && !$updateResponse.correct}
+                                                    {:else if $inputSelectedOption === index && !$updateResponse.correct}
                                                         <div class="w-full h-full p-2">
                                                             <div class="w-full h-full btn bg-error-300 duration-200 p-4">
                                                                 {index + 1}.
                                                                 <br>
-                                                                <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
+                                                                <span class="text-start w-full truncate ...">{$roundSide === Side.Definition ? option.value : option.definition}</span>
                                                             </div>
                                                         </div>
-                                                    {:else if (trainer.round_side === Side.Value && option.value === $updateResponse.correct_answer) || (trainer.round_side === Side.Definition && option.definition === $updateResponse.correct_answer)}
+                                                    {:else if ($roundSide === Side.Value && option.value === $updateResponse.correct_answer) || ($roundSide === Side.Definition && option.definition === $updateResponse.correct_answer)}
                                                         <div class="w-full h-full p-2">
                                                             <div class="w-full h-full btn bg-success-600 duration-200 p-4">
                                                                 {index + 1}.
                                                                 <br>
-                                                                <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
+                                                                <span class="text-start w-full truncate ...">{$roundSide === Side.Definition ? option.value : option.definition}</span>
                                                             </div>
                                                         </div>
                                                     {:else}
@@ -560,7 +591,7 @@
                                                             <div class="w-full h-full btn bg-gray-100 duration-200 p-4">
                                                                 {index + 1}.
                                                                 <br>
-                                                                <span class="text-start w-full truncate ...">{trainer.round_side === Side.Value ? option.value : option.definition}</span>
+                                                                <span class="text-start w-full truncate ...">{$roundSide === Side.Definition ? option.value : option.definition}</span>
                                                             </div>
                                                         </div>
                                                     {/if}
@@ -572,12 +603,12 @@
                                             {#if $updateResponse.correct}
                                                 <p class="mb-3 text-success-500">Well done!</p>
                                                 <div class="w-full outline-green-500 outline-1 outline rounded-md bg-success-200 p-5 text-gray-700">
-                                                    {$input_value}
+                                                    {$inputValue}
                                                 </div>
                                             {:else}
                                                 <p class="mb-3 text-gray-800">Maybe next time...</p>
                                                 <div class="w-full outline-red-500 outline-1 outline rounded-md bg-error-200 p-5 text-gray-700">
-                                                    {$input_value || "Skipped"}
+                                                    {$inputValue || "Skipped"}
                                                 </div>
                                                 <p class="my-3 text-gray-800">Correct Value</p>
                                                 <div class="w-full outline-green-500 outline-1 outline rounded-md bg-success-200 p-5 text-gray-700">
@@ -609,9 +640,19 @@
                             <p class="text-3xl">Your doing great! 🎉</p>
                             <p class="text-5xl text-success-600">{trainer.learn_percentage}%</p>
                         </div>
-                        <p class="mt-8 mb-2">What you already have learned or seen:</p>
+                        <p class="mt-8 mb-2">What you already have <span class="text-success-500">learned</span> or  <span class="text-warning-500">seen</span>:</p>
                         <div class="h-full max-h-52 w-full overflow-y-auto rounded-md p-2 shadow-inner bg-surface-200">
-                            {#each trainer.learned_deck.concat(trainer.current_deck) as card}
+                            {#each trainer.learning_deck as card}
+                                <div class="w-full p-1">
+                                    <div class="outline outline-1 w-full p-2 rounded-md outline-warning-600 bg-warning-100">
+                                        <div class="w-full flex">
+                                            <p class="w-[40%]">{card.value}</p>
+                                            <p class="w-[40%]">{card.definition}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                            {#each trainer.learned_deck as card}
                                 <div class="w-full p-1">
                                     <div class="outline outline-1 w-full p-2 rounded-md outline-success-600 bg-success-100">
                                         <div class="w-full flex">

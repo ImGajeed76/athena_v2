@@ -74,31 +74,7 @@
 
     set.subscribe((set) => {
         if (set && set.trainer) {
-            const allCards = [...set.trainer.learned_deck, ...set.trainer.unlearned_deck, ...set.trainer.current_deck, ...set.trainer.repetition_deck]
-
-            const levelZero: Card[] = []
-            for (const card of allCards) {
-                if (card.value_streak === 0 && card.definition_streak === 0) {
-                    levelZero.push(card)
-                }
-            }
-
-            const levelOne: Card[] = []
-            for (const card of allCards) {
-                if (!levelZero.includes(card as Card) && !set.trainer.learned_deck.includes(card as Card)) {
-                    levelOne.push(card)
-                }
-            }
-
-            const levelTwo: Card[] = []
-            for (const card of allCards) {
-                if (!levelZero.includes(card as Card) && !levelOne.includes(card as Card)) {
-                    levelTwo.push(card)
-                }
-            }
-
-            console.log(set.trainer.learned_deck)
-            sortedCards.set([levelZero, levelOne, levelTwo])
+            sortedCards.set([set.trainer.unlearned_deck, set.trainer.learning_deck, set.trainer.learned_deck])
         }
     })
 
@@ -143,7 +119,30 @@
 {:else if $set}
     <div class="w-full h-full pt-16">
         <div class="w-full h-full max-w-4xl xl:max-w-6xl p-5 pt-10 m-auto">
-            <div class="flex flex-row justify-between items-center">
+            <div class="md:flex md:flex-row justify-between items-center">
+                <div class="flex flex-row items-center justify-between md:hidden mb-10">
+                    <div>
+                        {#if !$set.private}
+                            <button class="btn px-1" on:click={share}>
+                                <span class="">Share</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path d="M5.5 9.75v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V9.75a.25.25 0 0 0-.25-.25h-2.5a.75.75 0 0 1 0-1.5h2.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 18.25 22H5.75A1.75 1.75 0 0 1 4 20.25V9.75C4 8.784 4.784 8 5.75 8h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25Zm7.03-8.53 3.25 3.25a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215l-1.97-1.97v10.69a.75.75 0 0 1-1.5 0V3.56L9.28 5.53a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0Z"></path>
+                                </svg>
+                            </button>
+                        {/if}
+                    </div>
+                    <div>
+                        {#if $currentUser && $set.authors.includes($currentUser.email || "")}
+                            <button class="btn variant-filled-secondary btn-3d-secondary mr-2"
+                                    on:click={() => goto("/cards/edit/" + $set.set_uuid)}>Edit
+                            </button>
+                        {/if}
+                        <button class="btn variant-filled-primary btn-3d-primary"
+                                on:click={() => goto("/cards/train/" + $set.set_uuid)}>Train
+                        </button>
+                    </div>
+                </div>
+
                 <div>
                     <p class="text-4xl">{$set.title}</p>
                     {#await getUsername($set.authors[0])}
@@ -155,10 +154,10 @@
                     {/await}
                 </div>
 
-                <div class="flex flex-row items-center">
+                <div class="flex flex-row items-center invisible md:visible h-0 md:h-fit">
                     {#if !$set.private}
                         <button class="btn" on:click={share}>
-                            <span class="relative translate-x-14 opacity-0 hover:opacity-100 duration-200 hover:translate-x-5 w-20">Share</span>
+                            <span class="relative md:translate-x-14 translate-x-5 md:opacity-0 hover:opacity-100 duration-200 hover:translate-x-5 w-20">Share</span>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                 <path d="M5.5 9.75v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V9.75a.25.25 0 0 0-.25-.25h-2.5a.75.75 0 0 1 0-1.5h2.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 18.25 22H5.75A1.75 1.75 0 0 1 4 20.25V9.75C4 8.784 4.784 8 5.75 8h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25Zm7.03-8.53 3.25 3.25a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215l-1.97-1.97v10.69a.75.75 0 0 1-1.5 0V3.56L9.28 5.53a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0Z"></path>
                             </svg>
@@ -175,7 +174,7 @@
                 </div>
             </div>
 
-            <div class="h-20"></div>
+            <div class="md:h-20 h-10"></div>
 
             {#if $set.values.length > 0}
                 <p>Set completed to {$set.trainer.learn_percentage}%</p>

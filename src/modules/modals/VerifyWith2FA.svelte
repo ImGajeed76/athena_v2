@@ -196,27 +196,27 @@
 <div class="w-fit h-fit">
     <div class="flex">
         <div class="p-2">
-            <input name="totp" id="totp" class="input h-12 text-4xl p-1 w-8" type="text" maxlength="6" placeholder="1"
+            <input name="totp" id="totp" class="input h-12 text-4xl p-1 w-8" type="number" maxlength="6" placeholder="1"
                    bind:this={code1Element} bind:value={$code1} on:input={onInput}/>
         </div>
         <div class="p-2">
-            <input class="input h-12 text-4xl p-1 w-8" type="text" maxlength="1" placeholder="2"
+            <input class="input h-12 text-4xl p-1 w-8" type="number" maxlength="1" placeholder="2"
                    bind:this={code2Element} bind:value={$code2} on:input={onInput}/>
         </div>
         <div class="p-2">
-            <input class="input h-12 text-4xl p-1 w-8" type="text" maxlength="1" placeholder="3"
+            <input class="input h-12 text-4xl p-1 w-8" type="number" maxlength="1" placeholder="3"
                    bind:this={code3Element} bind:value={$code3} on:input={onInput}/>
         </div>
         <div class="p-2">
-            <input class="input h-12 text-4xl p-1 w-8" type="text" maxlength="1" placeholder="4"
+            <input class="input h-12 text-4xl p-1 w-8" type="number" maxlength="1" placeholder="4"
                    bind:this={code4Element} bind:value={$code4} on:input={onInput}/>
         </div>
         <div class="p-2">
-            <input class="input h-12 text-4xl p-1 w-8" type="text" maxlength="1" placeholder="5"
+            <input class="input h-12 text-4xl p-1 w-8" type="number" maxlength="1" placeholder="5"
                    bind:this={code5Element} bind:value={$code5} on:input={onInput}/>
         </div>
         <div class="p-2">
-            <input class="input h-12 text-4xl p-1 w-8" type="text" maxlength="1" placeholder="6"
+            <input class="input h-12 text-4xl p-1 w-8" type="number" maxlength="1" placeholder="6"
                    bind:this={code6Element} bind:value={$code6} on:input={onInput}/>
         </div>
     </div>

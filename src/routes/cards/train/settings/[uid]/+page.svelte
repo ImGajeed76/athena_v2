@@ -144,8 +144,8 @@
                         <p class="text-xl">Side to learn</p>
                         <select class="select w-min" bind:value={$set.trainer.side_to_learn}>
                             <option value="both">Both</option>
-                            <option value="values">Values</option>
-                            <option value="definitions">Definitions</option>
+                            <option value="value">Values</option>
+                            <option value="definition">Definitions</option>
                         </select>
                     </div>
                     <p>Select which side you want to learn.</p>
