@@ -255,6 +255,7 @@ export class Trainer {
     get nextCard(): NextCardReturn {
         while (this.learning_deck.length < this.default_round_length) {
             const card = this.unlearned_deck[this.randomIndex(this.unlearned_deck)];
+            if (card === undefined) break;
             this.learning_deck.push(card);
             this.unlearned_deck.splice(cardIndex(card, this.unlearned_deck), 1);
         }
