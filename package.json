@@ -48,7 +48,7 @@
     "@types/animejs": "^3.1.12",
     "@types/qrcode": "^1.5.5",
     "@vercel/analytics": "^1.1.1",
-    "@vercel/speed-insights": "^1.0.1",
+    "@vercel/speed-insights": "^1.0.2",
     "animejs": "^3.2.1",
     "base64-arraybuffer": "^1.0.2",
     "franc": "^6.1.0",
