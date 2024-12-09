@@ -45,7 +45,7 @@
   "type": "module",
   "dependencies": {
     "@floating-ui/dom": "1.5.3",
-    "@supabase/supabase-js": "^2.44.2",
+    "@supabase/supabase-js": "^2.46.2",
     "@types/animejs": "^3.1.12",
     "@types/dompurify": "^3.0.5",
     "@types/qrcode": "^1.5.5",
