@@ -2,7 +2,7 @@
     import {FileDropzone, getToastStore, ProgressBar, Toast} from "@skeletonlabs/skeleton";
     import {writable} from "svelte/store";
     import {copy} from "$lib/helpers";
-    import {uploadAvatar} from "$lib/database";
+    import {clearCash, uploadAvatar} from "$lib/database";
     import {goto} from "$app/navigation";
     import {onMount} from "svelte";
 
@@ -207,7 +207,7 @@
         console.log(data, error)
 
         $loading = false;
-        goto("/account")
+        window.location.href = "/account";
     }
 
     function onChangeHandler(e: Event): void {
