@@ -173,7 +173,7 @@
         <!-- prettier-ignore -->
         <footer class="modal-footer {parent.regionFooter}">
             <button class="btn {parent.buttonNeutral}" on:click={parent.onClose}>{parent.buttonTextCancel}</button>
-            <button id="submit" class="btn outline-0 variant-ghost-primary text-black focus:variant-filled-primary hover:variant-filled-primary {parent.buttonPositive}" on:click={onFormSubmit}>Submit</button>
+            <button id="submit" class="btn {parent.buttonPositive}" on:click={onFormSubmit}>Submit</button>
         </footer>
     </div>
 {/if}

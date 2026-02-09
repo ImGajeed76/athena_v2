@@ -15,7 +15,7 @@ export async function generateRandomPassword(length = 16): Promise<string> {
 
     if (!/[A-Z]/.test(password)) return await generateRandomPassword(length);
     if (!/[a-z]/.test(password)) return await generateRandomPassword(length);
-    if (!/[0-9]/.test(password)) return await generateRandomPassword(length);
+    if (!/\d/.test(password)) return await generateRandomPassword(length);
     if (!/[!@#$%^&*()+}{[\]?><'"]/.test(password)) return await generateRandomPassword(length);
 
     return password;
