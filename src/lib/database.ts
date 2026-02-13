@@ -3,6 +3,7 @@ import {createClient} from "@supabase/supabase-js";
 import {PUBLIC_IN_PROD, PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL} from "$env/static/public";
 import {get, writable} from "svelte/store";
 import {decode} from 'base64-arraybuffer';
+import {loadPermissions} from "$lib/permissions";
 
 export const loggedIn = writable(false);
 export const currentUser = writable<null | {
@@ -28,7 +29,10 @@ let currentUserData: null | {
 
 export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
-if (PUBLIC_IN_PROD === "true") supabase.auth.refreshSession().then(onMount);
+if (PUBLIC_IN_PROD === "true") supabase.auth.refreshSession().then(onMount).catch(error => {
+    console.error(error);
+    onMount();
+});
 else onMount();
 
 function onMount() {
@@ -233,6 +237,8 @@ async function updateCurrentUser() {
         user.avatar_url = avatar;
         return user;
     })
+
+    await loadPermissions();
 }
 
 let usernameCash: Record<string, string> = {};
@@ -411,4 +417,12 @@ export async function uploadAvatar(base64: string, contentType: string): Promise
         .from("users")
         .update({avatar: imagePath})
         .eq("email", currentUserData.email);
+}
+
+
+// ------- Other -------
+
+export function clearCash() {
+    usernameCash = {};
+    imageCash = {};
 }
