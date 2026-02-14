@@ -1,6 +1,8 @@
-import {get} from "svelte/store";
+import {get, writable} from "svelte/store";
 import {currentUser, loggedIn, supabase} from "$lib/database";
 import {shortUUID} from "$lib/helpers";
+import {permissions, permissions_loaded} from "$lib/permissions";
+import {franc} from "franc";
 
 const CARD_LEARNED = 2;
 
@@ -103,19 +105,51 @@ export type UpdateCardReturn = {
     }
 }
 
+
+export const langMap: Record<string, string> = {
+    'ara': 'ar-SA',
+    'zho': 'zh-CN',
+    'deu': 'de-DE',
+    'dan': 'da-DK',
+    'eng': 'en-US',
+    'fin': 'fi-FI',
+    'hin': 'hi-IN',
+    'ind': 'id-ID',
+    'ita': 'it-IT',
+    'jpn': 'ja-JP',
+    'kor': 'ko-KR',
+    'nld': 'nl-NL',
+    'nor': 'no-NO',
+    'pol': 'pl-PL',
+    'por': 'pt-BR',
+    'rus': 'ru-RU',
+    'spa': 'es-ES',
+    'swe': 'sv-SE',
+    'tha': 'th-TH',
+    'ces': 'cs-CZ',
+    'tur': 'tr-TR',
+    'hun': 'hu-HU',
+    'fra': 'fr-FR',
+};
+
+export function cardIndex(card: Card, cards: Card[]): number {
+    return cards.findIndex(c => c.value === card.value && c.definition === card.definition && c.value_example === card.value_example && c.definition_example === card.definition_example && c.reference === card.reference);
+}
+
 export class Trainer {
     cards: Card[] = [];
     side_to_learn: "value" | "definition" | "both" = "both";
 
     learned_deck: Card[] = [];
+
+    learning_deck: Card[] = [];
     current_deck: Card[] = [];
+
     unlearned_deck: Card[] = [];
-    repetition_deck: Card[] = [];
 
-    current_card_index: number = 0;
-    current_deck_length: number = 5;
+    current_round_length: number = 5;
+    default_round_length: number = 5;
 
-    learn_percentage: number = 0;
     settings: LearningSettings = {
         allow_partial_answers: false,
         case_sensitive: false
@@ -123,6 +157,11 @@ export class Trainer {
 
     round: number = 0;
     round_side: Side = Side.Value;
+
+    value_language: string = "en-US";
+    definition_language: string = "en-US";
+
+    classVersion: number = 2;
 
     constructor(cards: Card[], settings?: LearningSettings, side_to_learn?: "value" | "definition" | "both") {
         this.cards = cards;
@@ -134,30 +173,64 @@ export class Trainer {
         this.chooseSideToLearn();
     }
 
+    detectLanguages() {
+        const allValuesCombined = this.cards.map(card => card.value).join(" ");
+        const allDefinitionsCombined = this.cards.map(card => card.definition).join(" ");
+
+        const valuesDetectedLangISO6393: string = franc(allValuesCombined);
+        const definitionsDetectedLangISO6393: string = franc(allDefinitionsCombined);
+
+        console.log(`Detected value language: ${valuesDetectedLangISO6393}`)
+        console.log(`Detected definition language: ${definitionsDetectedLangISO6393}`)
+
+        this.value_language = langMap[valuesDetectedLangISO6393] || "en-US";
+        this.definition_language = langMap[definitionsDetectedLangISO6393] || "en-US";
+
+        console.log(`Using value language: ${this.value_language}`)
+        console.log(`Using definition language: ${this.definition_language}`)
+    }
+
     import(trainer: Trainer) {
-        this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
-        this.side_to_learn = trainer.side_to_learn;
-        this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
-        this.current_deck = trainer.current_deck.map(card => (new Card("", "")).import(card));
-        this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
-        this.repetition_deck = trainer.repetition_deck.map(card => (new Card("", "")).import(card));
-        this.current_card_index = trainer.current_card_index;
-        this.current_deck_length = trainer.current_deck_length;
-        this.learn_percentage = trainer.learn_percentage;
-        this.settings = trainer.settings;
-        this.round = trainer.round;
-        this.round_side = trainer.round_side;
+        if (!trainer.classVersion) {
+            this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
+            this.side_to_learn = trainer.side_to_learn;
+            this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
+            this.learning_deck = trainer.current_deck.map(card => (new Card("", "")).import(card));
+            this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
+            this.settings = trainer.settings;
+            this.round = trainer.round;
+            this.chooseSideToLearn();
+
+            if (trainer.value_language) this.value_language = trainer.value_language;
+            if (trainer.definition_language) this.definition_language = trainer.definition_language;
+            if (!trainer.value_language || !trainer.definition_language) this.detectLanguages();
+        } else if (trainer.classVersion === 2) {
+            this.cards = trainer.cards.map(card => (new Card("", "")).import(card));
+            this.side_to_learn = trainer.side_to_learn;
+            this.learned_deck = trainer.learned_deck.map(card => (new Card("", "")).import(card));
+            this.learning_deck = trainer.learning_deck.map(card => (new Card("", "")).import(card));
+            this.unlearned_deck = trainer.unlearned_deck.map(card => (new Card("", "")).import(card));
+            this.settings = trainer.settings;
+            this.round = trainer.round;
+            this.chooseSideToLearn();
+
+            if (trainer.value_language) this.value_language = trainer.value_language;
+            if (trainer.definition_language) this.definition_language = trainer.definition_language;
+            if (!trainer.value_language || !trainer.definition_language) this.detectLanguages();
+        }
+
+        console.log(this)
     }
 
     refresh() {
         this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
         this.learned_deck = this.cards.filter(card => card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED);
-        this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
     }
 
-    chooseSideToLearn() {
+    chooseSideToLearn(random: boolean = true) {
         if (this.side_to_learn === "both") {
-            this.round_side = Math.random() < 0.5 ? Side.Value : Side.Definition;
+            if (random) this.round_side = Math.random() < 0.5 ? Side.Value : Side.Definition;
+            else this.round_side = this.round_side === Side.Value ? Side.Definition : Side.Value;
         } else {
             this.round_side = this.side_to_learn === "value" ? Side.Value : Side.Definition;
         }
@@ -180,37 +253,40 @@ export class Trainer {
     }
 
     get nextCard(): NextCardReturn {
-        console.log(this.learned_deck, this.current_deck, this.repetition_deck, this.unlearned_deck)
-
-        if (this.repetition_deck.length > 0 && this.current_card_index >= this.current_deck_length) {
-            const card = this.repetition_deck[this.randomIndex(this.repetition_deck)];
-            this.repetition_deck.splice(this.repetition_deck.indexOf(card), 1);
-            return {card, side: this.round_side, error: null};
+        while (this.learning_deck.length < this.default_round_length) {
+            const card = this.unlearned_deck[this.randomIndex(this.unlearned_deck)];
+            if (card === undefined) break;
+            this.learning_deck.push(card);
+            this.unlearned_deck.splice(cardIndex(card, this.unlearned_deck), 1);
         }
-
-        while (this.current_deck.length < this.current_deck_length) {
-            if (this.unlearned_deck.length === 0) break;
-
-            const index = this.randomIndex(this.unlearned_deck);
-            this.current_deck.push(this.unlearned_deck[index]);
-            this.unlearned_deck.splice(index, 1);
-        }
-
-        this.current_deck_length = Math.min(this.current_deck_length, this.current_deck.length);
 
         if (this.current_deck.length === 0) {
-            return {
-                error: {
-                    message: "No cards to learn",
-                    type: ErrorType.NoCards
+            if (this.unlearned_deck.length === 0) {
+                return {
+                    error: {
+                        message: "No cards left",
+                        type: ErrorType.NoCards,
+                    }
                 }
+            } else {
+                this.current_deck = [...this.learning_deck];
+                this.current_deck.sort(() => Math.random() - 0.5);
+                this.current_round_length = this.learning_deck.length;
             }
         }
 
-        const card = this.current_deck[Math.min(this.current_card_index, this.current_deck.length - 1)];
-        console.log(this.learned_deck, this.current_deck, this.repetition_deck, this.unlearned_deck)
+        const nextCard = this.current_deck[0];
+        this.current_deck.splice(cardIndex(nextCard, this.current_deck), 1);
 
-        return {card, side: this.round_side, error: null};
+        const side = this.round_side;
+
+        console.log(this)
+
+        return {
+            card: nextCard,
+            side: side,
+            error: null,
+        }
     }
 
     updateCard(card: Card, side: Side, answer: string, solve_time: number): UpdateCardReturn {
@@ -227,15 +303,15 @@ export class Trainer {
         answer = answer.trim();
 
         if (side === Side.Value) {
-            right_answer = card.value;
-        }
-
-        if (side === Side.Definition) {
             right_answer = card.definition;
         }
 
+        if (side === Side.Definition) {
+            right_answer = card.value;
+        }
+
         if (this.settings.case_sensitive && answer === right_answer) correct = true;
-        else if (!this.settings.case_sensitive && answer.toLowerCase() === right_answer.toLowerCase()) correct = true;
+        if (!this.settings.case_sensitive && answer.toLowerCase() === right_answer.toLowerCase()) correct = true;
 
         if (this.settings.allow_partial_answers && !this.settings.case_sensitive) {
             if (right_answer.split(",").includes(answer)) correct = true;
@@ -249,58 +325,64 @@ export class Trainer {
             if (right_answer.toLowerCase().replace(/\(.*?\)/g, "").trim().split(";").includes(answer.toLowerCase())) correct = true;
         }
 
+        if (side === Side.Value) {
+            card.value_seen++;
+        } else {
+            card.definition_seen++;
+        }
+
         if (correct) {
             if (side === Side.Value) {
                 card.value_streak++;
-                card.value_seen++;
-            }
-
-            if (side === Side.Definition) {
+            } else {
                 card.definition_streak++;
-                card.definition_seen++;
             }
 
             card.addSolveTime(solve_time);
         } else {
             if (side === Side.Value) {
-                if (card.value_streak == 0) {
-                    this.repetition_deck.push(card);
+                if (card.value_streak === 0) {
+                    this.current_deck.push(card);
+                    this.current_round_length++;
                 } else {
                     card.value_streak = 1;
                 }
             }
 
             if (side === Side.Definition) {
-                if (card.definition_streak == 0) {
-                    this.repetition_deck.push(card);
+                if (card.definition_streak === 0) {
+                    this.current_deck.push(card);
+                    this.current_round_length++;
                 } else {
                     card.definition_streak = 1;
                 }
             }
         }
 
+        this.learning_deck[cardIndex(card, this.learning_deck)] = card;
+
         if (card.value_streak >= CARD_LEARNED || card.definition_streak >= CARD_LEARNED) {
             this.learned_deck.push(card);
-            this.current_deck.splice(this.current_deck.indexOf(card), 1);
+            this.learning_deck.splice(cardIndex(card, this.learning_deck), 1);
         }
 
-        this.current_card_index++;
-        if (this.current_card_index >= this.current_deck_length && this.repetition_deck.length === 0) {
-            this.current_card_index = 0;
+        if (this.current_deck.length === 0) {
             this.round++;
-            this.chooseSideToLearn();
-            this.current_deck.sort(() => Math.random() - 0.5);
-        } else if (this.current_deck.length === 0 && this.repetition_deck.length === 0) {
-            this.current_card_index = 0;
-            this.round++;
-            this.chooseSideToLearn();
+            this.chooseSideToLearn(false);
         }
 
-
-        this.learn_percentage = Math.round(((this.learned_deck.length + this.current_deck.length) / (this.cards.length + this.current_deck.length)) * 100);
         console.log(this.learn_percentage)
 
         return {card, side, correct, correct_answer: right_answer, error: null};
+    }
+
+    get learn_percentage(): number {
+        const valueStreakSum = this.learned_deck.reduce((a, b) => a + b.value_streak, 0) + this.learning_deck.reduce((a, b) => a + b.value_streak, 0);
+        const definitionStreakSum = this.learned_deck.reduce((a, b) => a + b.definition_streak, 0) + this.learning_deck.reduce((a, b) => a + b.definition_streak, 0);
+        const totalStreakSum = valueStreakSum + definitionStreakSum;
+        const maxStreakSum = this.cards.length * CARD_LEARNED * 2;
+
+        return Math.round((totalStreakSum / maxStreakSum) * 100);
     }
 
     restart() {
@@ -312,8 +394,63 @@ export class Trainer {
 
         this.learned_deck = [];
         this.current_deck = [];
-        this.unlearned_deck = this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED);
-        this.current_deck_length = 5;
+        this.learning_deck = [];
+        this.unlearned_deck = [...this.cards.filter(card => card.value_streak < CARD_LEARNED && card.definition_streak < CARD_LEARNED)];
+        this.round = 0;
+    }
+
+    static extractSpecialCharacters(input: string): string[] {
+        const regex = /[^a-zA-Z0-9\s\p{P}]/gu;
+
+        return input.match(regex) || [];
+    }
+
+    getSpecialChars(): string[] {
+        const chars: string[] = [];
+
+        for (const card of this.cards) {
+            chars.push(...Trainer.extractSpecialCharacters(card.value));
+            chars.push(...Trainer.extractSpecialCharacters(card.definition));
+        }
+
+        return [...new Set(chars)];
+    }
+
+    async playAudio(cardText: string, lang: string | null = null) {
+        // find card
+        const card = this.cards.find(card => card.value === cardText || card.definition === cardText);
+        if (card === undefined) return;
+
+        // get the side of the card by checking if the cardText is the value or the definition
+        const side = card.value === cardText ? Side.Value : Side.Definition;
+        const langToUse = lang || (side === Side.Value ? this.value_language : this.definition_language);
+
+        cardText = cardText.replaceAll(/\/|;|\(.*?\)/g, "; ");
+
+        const response = await fetch("/api/tts", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: cardText,
+                gender: "male",
+                lang: langToUse
+            }),
+        })
+
+        if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const blob = new Blob([arrayBuffer], {type: "audio/wav"});
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play().catch((error) => {
+                console.error('Error message:', error.message);
+                console.error('Error name:', error.name);
+            });
+        } else {
+            console.error(response)
+        }
     }
 }
 
@@ -330,11 +467,33 @@ export function importCards(text: string, card_separator: string = ",", pair_sep
 
 export function exportCards(cards: Card[], card_separator: string = ",", pair_separator: string = "\n") {
     for (const card of cards) {
-        card.value = card.value.replace(card_separator, " ");
-        card.definition = card.definition.replace(card_separator, " ");
+        card.value = card.value.replaceAll(card_separator, " ");
+        card.definition = card.definition.replaceAll(card_separator, " ");
     }
 
     return cards.map(card => `${card.value}${card_separator}${card.definition}`).join(pair_separator);
+}
+
+export function CardsToArrays(cards: Card[]) {
+    const values: string[] = [];
+    const definitions: string[] = [];
+    for (const card of cards) {
+        values.push(card.value);
+        definitions.push(card.definition);
+    }
+    return {
+        values,
+        definitions
+    };
+}
+
+export function ArraysToCards(values: string[], definitions: string[]): Card[] {
+    const cards: Card[] = [];
+    for (let i = 0; i < values.length; i++) {
+        if (i >= definitions.length) break;
+        cards.push(new Card(values[i], definitions[i]))
+    }
+    return cards;
 }
 
 
@@ -400,12 +559,15 @@ export async function getSetPreviews(): Promise<{
     return result;
 }
 
-export async function getSetSearchPreviews(search: string): Promise<{
-    title: string;
-    short_uuid: string;
-    length: number;
-    author: string;
-}[] | null> {
+export async function getSetSearchPreviews(search: string, last_created_at: string = ""): Promise<{
+    previews: {
+        title: string;
+        short_uuid: string;
+        length: number;
+        author: string;
+    }[]
+    last_created_at: string;
+} | null> {
     if (!get(loggedIn)) {
         console.log("Not logged in")
         return null;
@@ -417,16 +579,19 @@ export async function getSetSearchPreviews(search: string): Promise<{
         return null;
     }
 
+    if (last_created_at === "" || last_created_at === null || last_created_at === undefined) {
+        last_created_at = "1970-01-01T00:00:00Z";
+    }
+
     const {data: cards_data, error: cards_error} = await supabase
-        .from("cards")
-        .select("title, short_uuid, values, editors")
-        .or(`title.ilike.%${search}%,short_uuid.ilike.%${search}%`)
-        .limit(4);
+        .rpc("search_cards", {search, last_created_at});
 
     if (cards_error) {
         console.error(cards_error);
         return null;
     }
+
+    console.log(cards_data)
 
     const result: {
         title: string;
@@ -434,6 +599,10 @@ export async function getSetSearchPreviews(search: string): Promise<{
         length: number;
         author: string;
     }[] = [];
+
+    if (!cards_data) return {previews: result, last_created_at};
+
+    const new_last_created_at = cards_data[cards_data.length - 1]?.created_at as string || last_created_at;
 
     for (const set of cards_data) {
         result.push({
@@ -444,7 +613,10 @@ export async function getSetSearchPreviews(search: string): Promise<{
         })
     }
 
-    return result;
+    return {
+        previews: result,
+        last_created_at: new_last_created_at,
+    };
 }
 
 export async function createNewSet(title: string = "Untitled"): Promise<string> {
@@ -480,7 +652,9 @@ export async function createNewSet(title: string = "Untitled"): Promise<string> 
     return short_uuid;
 }
 
-export async function getSet(short_uuid: string): Promise<{
+export let temporaryTrainers: Record<string, Trainer> = {};
+
+export async function getSet(short_uuid: string, ignore_not_logged_in: boolean = false): Promise<{
     data: {
         set_uuid: string,
         progress_uuid: string,
@@ -493,13 +667,13 @@ export async function getSet(short_uuid: string): Promise<{
     } | null,
     error: any
 }> {
-    if (!get(loggedIn)) {
+    if (!get(loggedIn) && !ignore_not_logged_in) {
         console.log("Not logged in")
         return {data: null, error: "Not logged in"};
     }
 
     const currentEmail = get(currentUser)?.email;
-    if (!currentEmail) {
+    if (!currentEmail && !ignore_not_logged_in) {
         console.log("No email")
         return {data: null, error: "No email"};
     }
@@ -541,6 +715,23 @@ export async function getSet(short_uuid: string): Promise<{
     for (let i = 0; i < set_data.values.length; i++) {
         const card = new Card(set_data.values[i], set_data.definitions[i]);
         cards.push(card);
+    }
+
+    if (ignore_not_logged_in && !currentEmail) {
+        loadTemporaryTrainersFromWebStorage();
+
+        if (temporaryTrainers[short_uuid]) {
+            result.trainer = temporaryTrainers[short_uuid];
+            return {data: result, error: null};
+        }
+
+        result.trainer = new Trainer(cards);
+        temporaryTrainers[short_uuid] = result.trainer;
+        return {data: result, error: null};
+    }
+
+    if (temporaryTrainers[short_uuid]) {
+        delete temporaryTrainers[short_uuid];
     }
 
     const {data: progress_data, error: progress_error} = await supabase
@@ -654,6 +845,13 @@ export async function saveSet(set_uuid: string, title: string, values: string[],
 export async function saveProgress(progress_uuid: string, trainer: Trainer) {
     if (!get(loggedIn)) {
         console.log("Not logged in")
+
+        if (temporaryTrainers[progress_uuid]) {
+            temporaryTrainers[progress_uuid] = trainer;
+            saveTemporaryTrainersInWebStorage();
+            return progress_uuid;
+        }
+
         return "";
     }
 
@@ -731,4 +929,156 @@ export async function updateSetPrivacy(set_uuid: string, private_set: boolean) {
     }
 
     return set_uuid;
+}
+
+export async function saveCardsForSuggestions(values: string[], definitions: string[], authors: string[]) {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return "";
+    }
+
+    if (!get(permissions_loaded)) {
+        console.log("Permissions not loaded")
+        return "";
+    }
+
+    if (!get(permissions).allow_card_saving) {
+        console.log("Card saving not allowed")
+        return "";
+    }
+
+    const currentEmail = get(currentUser)?.email;
+    if (!currentEmail) {
+        console.log("No email")
+        return "";
+    }
+
+    if (!authors.includes(currentEmail)) {
+        console.log("Not an author")
+        return "";
+    }
+
+    const words: {
+        value: string,
+        suggestions: string[]
+    }[] = [];
+
+
+    for (let value_index = 0; value_index < values.length; value_index++) {
+        const index = words.findIndex(word => word.value === values[value_index]);
+        if (index === -1) {
+            if (values[value_index] === "") continue;
+            words.push({
+                value: values[value_index],
+                suggestions: definitions[value_index] === "" ? [] : [definitions[value_index]]
+            })
+        } else {
+            if (definitions[value_index] === "") continue;
+            words[index].suggestions.push(definitions[value_index]);
+        }
+    }
+
+    for (let definition_index = 0; definition_index < definitions.length; definition_index++) {
+        const index = words.findIndex(word => word.value === definitions[definition_index]);
+        if (index === -1) {
+            words.push({
+                value: definitions[definition_index],
+                suggestions: [values[definition_index]]
+            })
+        } else {
+            words[index].suggestions.push(values[definition_index]);
+        }
+    }
+
+
+    for (const word of words) {
+        const {value, suggestions} = word;
+
+        // Check if the value already exists
+        const {data, error} = await supabase
+            .from('cards_suggestions')
+            .select('suggestions')
+            .eq('value', value)
+            .single();
+
+        if (error && error.code !== "PGRST116") {
+            console.error('Error fetching data:', error);
+            continue;
+        } else if (error) {
+            // create new row if it doesn't exist
+            await supabase
+                .from('cards_suggestions')
+                .insert({value, suggestions});
+
+            continue;
+        }
+
+        if (data) {
+            // If value exists, merge suggestions arrays and update
+            const mergedSuggestions = [...new Set([...data.suggestions, ...suggestions])];
+            await supabase
+                .from('cards_suggestions')
+                .update({suggestions: mergedSuggestions})
+                .eq('value', value);
+        } else {
+            // If value does not exist, insert new row
+            await supabase
+                .from('cards_suggestions')
+                .insert([{value, suggestions}]);
+        }
+    }
+}
+
+export async function getSuggestions(value: string): Promise<string[]> {
+    if (!get(loggedIn)) {
+        console.log("Not logged in")
+        return [];
+    }
+
+    if (value.length < 2) return [];
+
+    const {data, error} = await supabase
+        .from('cards_suggestions')
+        .select('suggestions')
+        .ilike('value', `%${value}%`)
+        .limit(5);
+
+    if (error) {
+        console.error('Error fetching data:', error);
+        return [];
+    }
+
+    if (!data) {
+        console.error('No data');
+        return [];
+    }
+
+    const suggestions: string[] = [];
+
+    for (const row of data) {
+        suggestions.push(...row.suggestions);
+    }
+
+    return [...new Set(suggestions)].filter(suggestion => suggestion !== "");
+}
+
+export function saveTemporaryTrainersInWebStorage() {
+    console.log("Saving temporary trainers")
+    console.log(temporaryTrainers)
+    localStorage.setItem("temporaryTrainers", JSON.stringify(temporaryTrainers));
+}
+
+export function loadTemporaryTrainersFromWebStorage() {
+    const trainers = localStorage.getItem("temporaryTrainers");
+    if (!trainers) return;
+    const parsedTrainers = JSON.parse(trainers);
+    const importedTrainers: Record<string, Trainer> = {};
+
+    for (const key in parsedTrainers) {
+        const trainer = new Trainer([]);
+        trainer.import(parsedTrainers[key]);
+        importedTrainers[key] = trainer;
+    }
+
+    temporaryTrainers = importedTrainers;
 }
